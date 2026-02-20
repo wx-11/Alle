@@ -9,13 +9,12 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 const PARAGRAPH_SEPARATOR = '%%';
 
 function detectLanguage(text: string): 'zh' | 'other' {
-  // 统计中文字符占比，超过 30% 视为中文
   const chineseChars = text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g);
   const ratio = (chineseChars?.length ?? 0) / Math.max(text.length, 1);
   return ratio > 0.3 ? 'zh' : 'other';
 }
 
-function buildPrompt(targetLang: string): string {
+function buildPlainTextPrompt(targetLang: string): string {
   return `You are a professional ${targetLang} native translator who needs to fluently translate text into ${targetLang}.
 
 ## Translation Rules
@@ -33,28 +32,32 @@ function buildPrompt(targetLang: string): string {
 Paragraph A
 ${PARAGRAPH_SEPARATOR}
 Paragraph B
-${PARAGRAPH_SEPARATOR}
-Paragraph C
 
 ### Multi-paragraph Output:
 Translation A
 ${PARAGRAPH_SEPARATOR}
 Translation B
-${PARAGRAPH_SEPARATOR}
-Translation C
-
-### Single paragraph Input:
-Single paragraph content
-
-### Single paragraph Output:
-Direct translation without separators
 
 Translate to ${targetLang} (output translation only):`;
 }
 
-/** 将多段文本用 %% 分隔，发给 AI 后再还原 */
+function buildHtmlPrompt(targetLang: string): string {
+  return `You are a professional ${targetLang} native translator. Translate the text content within the HTML into ${targetLang}.
+
+## CRITICAL RULES
+1. Output ONLY the translated HTML. No explanations, no markdown code fences, no extra text.
+2. ONLY translate human-readable text content (the text users see). Do NOT touch anything else.
+3. Keep ALL HTML tags, attributes, styles, classes, IDs completely unchanged.
+4. Keep ALL URLs, href values, src values, email addresses unchanged.
+5. Keep ALL proper nouns, brand names, product names, code snippets unchanged.
+6. The output must be valid HTML with the EXACT same tag structure as the input.
+7. Do NOT add, remove, or reorder any HTML tags.
+8. Do NOT wrap output in \`\`\`html or any code block.
+
+Translate to ${targetLang} (output translated HTML only):`;
+}
+
 function preProcess(text: string): string {
-  // 按连续空行分段
   const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
   if (paragraphs.length <= 1) return text.trim();
   return paragraphs.join(`\n${PARAGRAPH_SEPARATOR}\n`);
@@ -64,7 +67,6 @@ function postProcess(translated: string, originalText: string): string {
   const originalParagraphs = originalText.split(/\n{2,}/).filter(p => p.trim());
   if (originalParagraphs.length <= 1) return translated.trim();
 
-  // 还原 %% 为双换行
   return translated
     .split(PARAGRAPH_SEPARATOR)
     .map(p => p.trim())
@@ -72,7 +74,17 @@ function postProcess(translated: string, originalText: string): string {
     .join('\n\n');
 }
 
-async function translateWithOpenAI(
+/** 清理 AI 返回的 HTML（去除可能包裹的 markdown code fence） */
+function cleanHtmlResponse(html: string): string {
+  let cleaned = html.trim();
+  // 去除 ```html ... ``` 包裹
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```(?:html)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+  }
+  return cleaned.trim();
+}
+
+async function callOpenAI(
   content: string,
   prompt: string,
   env: CloudflareEnv
@@ -94,11 +106,10 @@ async function translateWithOpenAI(
   if (!result) {
     throw new Error('AI returned empty response');
   }
-
   return result;
 }
 
-async function translateWithCloudflareAI(
+async function callCloudflareAI(
   content: string,
   prompt: string,
   env: CloudflareEnv
@@ -121,43 +132,55 @@ async function translateWithCloudflareAI(
   throw new Error('Unexpected response format from Cloudflare AI');
 }
 
+async function translate(content: string, prompt: string, env: CloudflareEnv): Promise<string> {
+  if (env.OPENAI_BASE_URL && env.OPENAI_API_KEY) {
+    return callOpenAI(content, prompt, env);
+  }
+  return callCloudflareAI(content, prompt, env);
+}
+
 async function translateHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return failure(res, 'Method not allowed', 405);
   }
 
-  const { content } = req.body as { content?: string };
+  const { content, contentHtml } = req.body as { content?: string; contentHtml?: string };
 
   if (!content || typeof content !== 'string') {
     return failure(res, 'content is required and must be a string', 400);
   }
 
-  if (content.length > 50000) {
-    return failure(res, 'Content too long, max 50000 characters', 400);
+  const totalLength = (content?.length ?? 0) + (contentHtml?.length ?? 0);
+  if (totalLength > 100000) {
+    return failure(res, 'Content too long', 400);
   }
 
   try {
     const { env } = await getCloudflareContext();
 
-    // 检测语言，确定翻译方向
     const lang = detectLanguage(content);
     const targetLang = lang === 'zh' ? 'English' : 'Simplified Chinese';
-    const prompt = buildPrompt(targetLang);
 
-    // 预处理：段落分隔
+    // 纯文本翻译（始终执行，作为 text 结果）
+    const plainPrompt = buildPlainTextPrompt(targetLang);
     const processed = preProcess(content);
+    const translatedPlain = await translate(processed, plainPrompt, env);
+    const textResult = postProcess(translatedPlain, content);
 
-    let translated: string;
-    if (env.OPENAI_BASE_URL && env.OPENAI_API_KEY) {
-      translated = await translateWithOpenAI(processed, prompt, env);
-    } else {
-      translated = await translateWithCloudflareAI(processed, prompt, env);
+    // HTML 翻译（如果有 contentHtml 则额外翻译）
+    let htmlResult: string | null = null;
+    if (contentHtml && typeof contentHtml === 'string' && contentHtml.length > 0) {
+      try {
+        const htmlPrompt = buildHtmlPrompt(targetLang);
+        const rawHtml = await translate(contentHtml, htmlPrompt, env);
+        htmlResult = cleanHtmlResponse(rawHtml);
+      } catch (e) {
+        // HTML 翻译失败不影响整体，fallback 到纯文本
+        console.error('HTML translation failed, falling back to text:', e);
+      }
     }
 
-    // 后处理：还原段落结构
-    const result = postProcess(translated, content);
-
-    return success<string>(res, result);
+    return success<{ text: string; html: string | null }>(res, { text: textResult, html: htmlResult });
   } catch (e) {
     console.error('Translation error:', e);
     const errorMessage = e instanceof Error ? e.message : String(e);
