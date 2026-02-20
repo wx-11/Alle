@@ -51,14 +51,16 @@ export default function EmailDetail({ email }: { email: Email | null }) {
       return;
     }
 
-    const content = email.bodyHtml || email.bodyText || '';
+    // 始终翻译纯文本，避免 HTML 导致 AI 截断或输出损坏
+    const content = email.bodyText || email.bodyHtml || '';
     if (!content) return;
 
     translateMutation.mutate(content, {
       onSuccess: (translated) => {
+        // 翻译结果始终作为纯文本存储和展示
         setTranslatedCache((prev) => ({
           ...prev,
-          [email.id]: email.bodyHtml ? { html: translated } : { text: translated },
+          [email.id]: { text: translated },
         }));
         setShowTranslated(true);
       },
@@ -139,8 +141,8 @@ export default function EmailDetail({ email }: { email: Email | null }) {
   const isTranslating = translateMutation.isPending;
   const hasContent = !!(email.bodyHtml || email.bodyText);
 
-  const displayHtml = showTranslated && cached?.html ? cached.html : email.bodyHtml;
-  const displayText = showTranslated && cached?.text ? cached.text : email.bodyText;
+  // 翻译模式：显示纯文本翻译结果；正常模式：显示原始 HTML/文本
+  const isTranslatedView = showTranslated && cached?.text;
 
   return (
     <motion.div
@@ -388,10 +390,15 @@ export default function EmailDetail({ email }: { email: Email | null }) {
                   </div>
                 )}
               </div>
+            ) : isTranslatedView ? (
+              // 翻译模式：纯文本展示，避免 HTML 渲染问题
+              <p className="text-[15px] text-foreground whitespace-pre-wrap leading-7 max-w-[65ch]">
+                {cached.text}
+              </p>
             ) : (
               <EmailContent
-                bodyHtml={displayHtml}
-                bodyText={displayText}
+                bodyHtml={email.bodyHtml}
+                bodyText={email.bodyText}
               />
             )}
           </div>
