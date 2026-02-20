@@ -42,6 +42,8 @@
 | `PASSWORD`              |  ✅  | 您的邮箱密码                                          |
 | `OPENAI_API_KEY`        |  ❌  | OpenAI API 密钥,默认使用Worker AI                     |
 | `OPENAI_BASE_URL`       |  ❌  | OpenAI API 基础 URL,默认使用Worker AI                 |
+| `WEBHOOK_URL`           |  ❌  | WebHook URL（如企业微信群机器人地址）                  |
+| `TELEGRAM_BOT_TOKEN`    |  ❌  | Telegram Bot Token                                    |
 
 ![](images/github_1.png)
 5. 添加以下 Variables
@@ -56,19 +58,13 @@
 | `AUTO_DEL_TIME`         |  ❌  | 自动删除过期邮件时间,单位秒                            |
 | `JWT_MIN_TTL`           |  ❌  | JWT 最小 TTL,默认300s                                 |
 | `JWT_MAX_TTL`           |  ❌  | JWT 最大 TTL,默认6000s                                |
+| `WEBHOOK_TYPE`          |  ❌  | WebHook 发送的邮件类型,多个类型用逗号分隔              |
+| `WEBHOOK_TEMPLATE`      |  ❌  | WebHook 消息模板                                      |
+| `TELEGRAM_CHAT_ID`      |  ❌  | Telegram Chat ID                                      |
 | `TELEGRAM_TEMPLATE`     |  ❌  | Telegram 消息模板                                     |
 | `TELEGRAM_TYPE`         |  ❌  | Telegram 发送的邮件类型                               |
 
 ![](images/github_2.png)
-
-6. 如需使用Telegram Bot通知，还需添加以下 Secrets：
-
-| Secret 名称             | 必需 | 用途                                                  |
-| ----------------------- | :--: | ----------------------------------------------------- |
-| `TELEGRAM_BOT_TOKEN`    |  ❌  | Telegram Bot Token                                    |
-| `TELEGRAM_CHAT_ID`      |  ❌  | Telegram Chat ID                                      |
-
-
 
 **运行工作流**
 1. 然后在Action页面手动运行工作流
@@ -128,7 +124,7 @@ AUTO_DEL_TYPE=auth_code,auth_link,service_link,subscription_link,other_link
 
 ## WebHook 通知
 
-`WEBHOOK_URL` WebHook URL
+`WEBHOOK_URL` WebHook URL（需在 GitHub Secrets 中配置）
 
 `WEBHOOK_TYPE` WebHook 发送的邮件类型
 
@@ -166,7 +162,7 @@ WEBHOOK_TYPE=auth_code,auth_link,service_link,subscription_link,other_link
 
 ## Telegram Bot 通知
 
-`TELEGRAM_BOT_TOKEN` Telegram Bot Token
+`TELEGRAM_BOT_TOKEN` Telegram Bot Token（需在 GitHub Secrets 中配置）
 
 `TELEGRAM_CHAT_ID` Telegram Chat ID
 

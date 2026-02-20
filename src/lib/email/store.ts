@@ -7,8 +7,25 @@ import * as cheerio from 'cheerio';
 import type { Email, NewEmail } from "@/types";
 
 
+const EMAIL_TYPE_ZH: Record<string, string> = {
+    auth_code: '授权码',
+    auth_link: '授权链接',
+    service_link: '服务链接',
+    subscription_link: '订阅链接',
+    internal_link: '内部链接',
+    other_link: '其他链接',
+    none: '无',
+};
+
 function replaceTemplateAdvanced(template: string, email: Email): string {
+    const extra: Record<string, string> = {
+        emailTypeName: EMAIL_TYPE_ZH[email.emailType ?? ''] ?? email.emailType ?? '',
+    };
+
     return template.replace(/{(\w+)}/g, (match, key) => {
+        if (key in extra) {
+            return JSON.stringify(extra[key]).slice(1, -1);
+        }
         const value = email[key as keyof Email];
         if (value === null || value === undefined) {
             return '';
