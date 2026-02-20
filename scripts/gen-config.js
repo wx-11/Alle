@@ -33,7 +33,7 @@ const configContent = fs.readFileSync(configPath, 'utf-8');
 const config = JSON.parse(configContent);
 
 if (config.vars) {
-    ['ENABLE_AI_EXTRACT', 'EXTRACT_MODEL', 'JWT_MIN_TTL', 'JWT_MAX_TTL', 'ENABLE_AUTO_DEL', 'AUTO_DEL_TYPE', 'AUTO_DEL_TIME', 'WEBHOOK_URL', 'WEBHOOK_TYPE', 'WEBHOOK_TEMPLATE', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID', 'TELEGRAM_TEMPLATE', 'TELEGRAM_TYPE']
+    ['ENABLE_AI_EXTRACT', 'EXTRACT_MODEL', 'JWT_MIN_TTL', 'JWT_MAX_TTL', 'ENABLE_AUTO_DEL', 'AUTO_DEL_TYPE', 'AUTO_DEL_TIME', 'WEBHOOK_TYPE', 'WEBHOOK_TEMPLATE', 'TELEGRAM_BOT_TOKEN', 'TELEGRAM_CHAT_ID', 'TELEGRAM_TEMPLATE', 'TELEGRAM_TYPE']
         .forEach(key => {
             if (envVars[key]) config.vars[key] = envVars[key];
         });
@@ -55,6 +55,7 @@ const envLocalVars = {
     OPENAI_BASE_URL: envVars.OPENAI_BASE_URL,
     USERNAME: envVars.USERNAME,
     PASSWORD: envVars.PASSWORD,
+    WEBHOOK_URL: envVars.WEBHOOK_URL,
 };
 
 const envFileContent = Object.entries(envLocalVars)
