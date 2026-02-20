@@ -6,31 +6,75 @@ import { success, failure } from '@/types';
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const TRANSLATE_PROMPT = `You are a professional translator. Your ONLY job is to translate the human-readable text strings in the input.
+const PARAGRAPH_SEPARATOR = '%%';
 
-# Language Direction
-- If the text is Chinese (Simplified or Traditional) → translate to English.
-- If the text is any other language → translate to Simplified Chinese.
+function detectLanguage(text: string): 'zh' | 'other' {
+  // 统计中文字符占比，超过 30% 视为中文
+  const chineseChars = text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g);
+  const ratio = (chineseChars?.length ?? 0) / Math.max(text.length, 1);
+  return ratio > 0.3 ? 'zh' : 'other';
+}
 
-# What to Translate
-- ONLY translate human-readable text strings (words, sentences, paragraphs).
+function buildPrompt(targetLang: string): string {
+  return `You are a professional ${targetLang} native translator who needs to fluently translate text into ${targetLang}.
 
-# What to Keep UNCHANGED (do NOT touch)
-- ALL HTML tags, attributes, and structure (e.g. <div class="x">, <a href="...">, <br/>, &nbsp;)
-- ALL URLs, email addresses, domain names
-- ALL numbers, dates, timestamps in their original format
-- ALL punctuation and symbols that are part of formatting (—, ·, |, /, etc.)
-- ALL code snippets, variable names, CSS classes
-- ALL proper nouns, brand names, product names
-- ALL line breaks, whitespace, indentation — preserve the exact same structure
+## Translation Rules
+1. Output only the translated content, without explanations or additional content (such as "Here's the translation:" or "Translation as follows:")
+2. The returned translation must maintain exactly the same number of paragraphs and format as the original text
+3. For content that should not be translated (such as proper nouns, brand names, URLs, email addresses, code, numbers), keep the original text
+4. If input contains ${PARAGRAPH_SEPARATOR}, use ${PARAGRAPH_SEPARATOR} in your output. If input has no ${PARAGRAPH_SEPARATOR}, don't use ${PARAGRAPH_SEPARATOR} in your output
 
-# Output Rules
-- Return ONLY the translated result. No notes, no explanations, no markdown wrappers.
-- The output must have the EXACT same structure and formatting as the input.
-- If the input is HTML, the output must be valid HTML with identical tag structure.`;
+## OUTPUT FORMAT:
+- **Single paragraph input** → Output translation directly (no separators, no extra text)
+- **Multi-paragraph input** → Use ${PARAGRAPH_SEPARATOR} as paragraph separator between translations
+
+## Examples
+### Multi-paragraph Input:
+Paragraph A
+${PARAGRAPH_SEPARATOR}
+Paragraph B
+${PARAGRAPH_SEPARATOR}
+Paragraph C
+
+### Multi-paragraph Output:
+Translation A
+${PARAGRAPH_SEPARATOR}
+Translation B
+${PARAGRAPH_SEPARATOR}
+Translation C
+
+### Single paragraph Input:
+Single paragraph content
+
+### Single paragraph Output:
+Direct translation without separators
+
+Translate to ${targetLang} (output translation only):`;
+}
+
+/** 将多段文本用 %% 分隔，发给 AI 后再还原 */
+function preProcess(text: string): string {
+  // 按连续空行分段
+  const paragraphs = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+  if (paragraphs.length <= 1) return text.trim();
+  return paragraphs.join(`\n${PARAGRAPH_SEPARATOR}\n`);
+}
+
+function postProcess(translated: string, originalText: string): string {
+  const originalParagraphs = originalText.split(/\n{2,}/).filter(p => p.trim());
+  if (originalParagraphs.length <= 1) return translated.trim();
+
+  // 还原 %% 为双换行
+  return translated
+    .split(PARAGRAPH_SEPARATOR)
+    .map(p => p.trim())
+    .filter(Boolean)
+    .join('\n\n');
+}
 
 async function translateWithOpenAI(
   content: string,
+  prompt: string,
   env: CloudflareEnv
 ): Promise<string> {
   const client = new OpenAI({
@@ -41,7 +85,7 @@ async function translateWithOpenAI(
   const response = await client.chat.completions.create({
     model: env.EXTRACT_MODEL,
     messages: [
-      { role: 'system', content: TRANSLATE_PROMPT },
+      { role: 'system', content: prompt },
       { role: 'user', content },
     ],
   });
@@ -56,11 +100,12 @@ async function translateWithOpenAI(
 
 async function translateWithCloudflareAI(
   content: string,
+  prompt: string,
   env: CloudflareEnv
 ): Promise<string> {
   const result = await env.AI.run(env.EXTRACT_MODEL as keyof AiModels, {
     messages: [
-      { role: 'system', content: TRANSLATE_PROMPT },
+      { role: 'system', content: prompt },
       { role: 'user', content },
     ],
     stream: false,
@@ -87,7 +132,6 @@ async function translateHandler(req: NextApiRequest, res: NextApiResponse) {
     return failure(res, 'content is required and must be a string', 400);
   }
 
-  // 限制内容长度，避免过大的请求
   if (content.length > 50000) {
     return failure(res, 'Content too long, max 50000 characters', 400);
   }
@@ -95,14 +139,25 @@ async function translateHandler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { env } = await getCloudflareContext();
 
+    // 检测语言，确定翻译方向
+    const lang = detectLanguage(content);
+    const targetLang = lang === 'zh' ? 'English' : 'Simplified Chinese';
+    const prompt = buildPrompt(targetLang);
+
+    // 预处理：段落分隔
+    const processed = preProcess(content);
+
     let translated: string;
     if (env.OPENAI_BASE_URL && env.OPENAI_API_KEY) {
-      translated = await translateWithOpenAI(content, env);
+      translated = await translateWithOpenAI(processed, prompt, env);
     } else {
-      translated = await translateWithCloudflareAI(content, env);
+      translated = await translateWithCloudflareAI(processed, prompt, env);
     }
 
-    return success<string>(res, translated);
+    // 后处理：还原段落结构
+    const result = postProcess(translated, content);
+
+    return success<string>(res, result);
   } catch (e) {
     console.error('Translation error:', e);
     const errorMessage = e instanceof Error ? e.message : String(e);
