@@ -81,5 +81,8 @@
   "translatedHint": "Translated by AI, for reference only",
   "noSubject": "(No Subject)",
   "selectEmail": "Select an email",
-  "selectEmailDesc": "Select an email from the list on the left to view its details"
+  "selectEmailDesc": "Select an email from the list on the left to view its details",
+  "copyFullText": "Copy",
+  "viewRawSource": "Source",
+  "hideRawSource": "Back"
 }

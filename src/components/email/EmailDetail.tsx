@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Languages, Loader2, ArrowLeftRight } from "lucide-react";
+import { Mail, Languages, Loader2, ArrowLeftRight, Copy, Check, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -26,30 +26,31 @@ export default function EmailDetail({ email }: { email: Email | null }) {
   // 翻译状态：按 emailId 缓存翻译结果
   const [translatedCache, setTranslatedCache] = useState<Record<number, { html?: string; text?: string }>>({});
   const [showTranslated, setShowTranslated] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [showRawSource, setShowRawSource] = useState(false);
 
   useEffect(() => {
     if (!email || email.readStatus === 1) {
       return;
     }
-
     markEmail({ emailId: email.id, isRead: true });
   }, [email, markEmail]);
 
-  // 切换邮件时重置翻译显示状态
+  // 切换邮件时重置所有状态
   useEffect(() => {
     setShowTranslated(false);
+    setShowRawSource(false);
+    setCopied(false);
   }, [email?.id]);
 
   const handleTranslate = useCallback(() => {
     if (!email) return;
 
-    // 如果已翻译过，直接切换显示
     if (translatedCache[email.id]) {
       setShowTranslated((prev) => !prev);
       return;
     }
 
-    // 发起翻译请求
     const content = email.bodyHtml || email.bodyText || '';
     if (!content) return;
 
@@ -64,6 +65,20 @@ export default function EmailDetail({ email }: { email: Email | null }) {
     });
   }, [email, translatedCache, translateMutation]);
 
+  const handleCopyFullText = useCallback(() => {
+    if (!email) return;
+    const text = email.bodyText || email.bodyHtml || '';
+    if (!text) return;
+
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [email]);
+
+  const handleToggleRawSource = useCallback(() => {
+    setShowRawSource((prev) => !prev);
+  }, []);
+
   if (!email) {
     return (
       <motion.div
@@ -74,7 +89,6 @@ export default function EmailDetail({ email }: { email: Email | null }) {
         className="flex items-center justify-center h-full w-full"
       >
         <div className="flex flex-col items-center text-center p-8">
-          {/* 叠放信封效果 */}
           <motion.div
             initial={{ scale: 0, rotate: -15 }}
             animate={{ scale: 1, rotate: 0 }}
@@ -87,7 +101,6 @@ export default function EmailDetail({ email }: { email: Email | null }) {
               <Mail className="h-9 w-9 text-muted-foreground/70" />
             </div>
           </motion.div>
-
           <motion.h3
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -109,12 +122,10 @@ export default function EmailDetail({ email }: { email: Email | null }) {
     );
   }
 
-  // 格式化完整时间
   const formatFullTime = (sentAt: string | null): string => {
     if (!sentAt) return '';
     const date = new Date(sentAt);
     if (Number.isNaN(date.getTime())) return '';
-
     return date.toLocaleString(undefined, {
       year: 'numeric',
       month: 'long',
@@ -128,7 +139,6 @@ export default function EmailDetail({ email }: { email: Email | null }) {
   const isTranslating = translateMutation.isPending;
   const hasContent = !!(email.bodyHtml || email.bodyText);
 
-  // 当前显示的内容
   const displayHtml = showTranslated && cached?.html ? cached.html : email.bodyHtml;
   const displayText = showTranslated && cached?.text ? cached.text : email.bodyText;
 
@@ -141,7 +151,7 @@ export default function EmailDetail({ email }: { email: Email | null }) {
       transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
       className="flex flex-col h-full"
     >
-      {/* 标题区：纯净背景，突出主题 */}
+      {/* 标题区 */}
       <div className="flex-shrink-0">
         <div className={cn(isMobile ? "px-4 py-3" : "px-6 py-5")}>
           <motion.h2
@@ -158,7 +168,7 @@ export default function EmailDetail({ email }: { email: Email | null }) {
         </div>
       </div>
 
-      {/* 信息区：微妙的层级差异 */}
+      {/* 信息区 */}
       <div className="flex-shrink-0 bg-muted/30 dark:bg-card">
         <Separator />
         <motion.div
@@ -176,14 +186,38 @@ export default function EmailDetail({ email }: { email: Email | null }) {
             </div>
 
             <div className="flex-1 min-w-0">
-              {/* 第一行：发件人名 + 翻译按钮 */}
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-semibold text-foreground truncate">
-                  {email.fromName}
-                </span>
+              {/* 发件人名 */}
+              <span className="text-sm font-semibold text-foreground truncate block">
+                {email.fromName}
+              </span>
 
-                {/* 翻译按钮 - 三态视觉 */}
-                {hasContent && (
+              {/* 邮箱地址 */}
+              <div className="mt-0.5">
+                <span className="text-xs text-muted-foreground">
+                  {email.fromAddress}
+                </span>
+              </div>
+
+              {/* 收件人 + 时间 */}
+              <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground flex-wrap">
+                <span>{t("to")}</span>
+                <span className="text-foreground/70 truncate max-w-[200px]">
+                  {email.toAddress}
+                </span>
+                {email.sentAt && (
+                  <>
+                    <span className="text-border">·</span>
+                    <span className="flex-shrink-0">
+                      {formatFullTime(email.sentAt)}
+                    </span>
+                  </>
+                )}
+              </div>
+
+              {/* 操作按钮栏 */}
+              {hasContent && (
+                <div className="flex items-center gap-1.5 mt-3">
+                  {/* 翻译按钮 */}
                   <Button
                     variant={
                       isTranslating ? "outline" :
@@ -199,7 +233,7 @@ export default function EmailDetail({ email }: { email: Email | null }) {
                       t("translate")
                     }
                     className={cn(
-                      "rounded-lg gap-1.5 text-xs transition-all duration-200 flex-shrink-0",
+                      "rounded-lg gap-1.5 text-xs transition-all duration-200 h-7 px-2.5",
                       !isTranslating && !showTranslated && "text-muted-foreground hover:text-foreground",
                       isTranslating && "border-primary/30 text-muted-foreground",
                       showTranslated && "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15"
@@ -220,31 +254,59 @@ export default function EmailDetail({ email }: { email: Email | null }) {
                           : t("translate")}
                     </span>
                   </Button>
-                )}
-              </div>
 
-              {/* 第二行：邮箱地址 */}
-              <div className="mt-0.5">
-                <span className="text-xs text-muted-foreground">
-                  {email.fromAddress}
-                </span>
-              </div>
+                  {/* 复制全文按钮 */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCopyFullText}
+                    aria-label={copied ? t("copied") : t("copyFullText")}
+                    className="rounded-lg gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-all duration-200 h-7 px-2.5"
+                  >
+                    <AnimatePresence mode="wait" initial={false}>
+                      {copied ? (
+                        <motion.div
+                          key="check"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          exit={{ scale: 0 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <Check className="h-3.5 w-3.5 text-green-500" />
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="copy"
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          exit={{ scale: 0 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    <span>{copied ? t("copied") : t("copyFullText")}</span>
+                  </Button>
 
-              {/* 第三行：收件人 + 时间（圆点分隔） */}
-              <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground flex-wrap">
-                <span>{t("to")}</span>
-                <span className="text-foreground/70 truncate max-w-[200px]">
-                  {email.toAddress}
-                </span>
-                {email.sentAt && (
-                  <>
-                    <span className="text-border">·</span>
-                    <span className="flex-shrink-0">
-                      {formatFullTime(email.sentAt)}
-                    </span>
-                  </>
-                )}
-              </div>
+                  {/* 查看原文按钮 */}
+                  <Button
+                    variant={showRawSource ? "secondary" : "ghost"}
+                    size="sm"
+                    onClick={handleToggleRawSource}
+                    aria-label={showRawSource ? t("hideRawSource") : t("viewRawSource")}
+                    className={cn(
+                      "rounded-lg gap-1.5 text-xs transition-all duration-200 h-7 px-2.5",
+                      showRawSource
+                        ? "bg-muted text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Code className="h-3.5 w-3.5" />
+                    <span>{showRawSource ? t("hideRawSource") : t("viewRawSource")}</span>
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
@@ -274,7 +336,7 @@ export default function EmailDetail({ email }: { email: Email | null }) {
         >
           {/* 翻译提示条 */}
           <AnimatePresence>
-            {showTranslated && cached && (
+            {showTranslated && cached && !showRawSource && (
               <motion.div
                 initial={{ opacity: 0, height: 0, marginTop: 0 }}
                 animate={{ opacity: 1, height: "auto", marginTop: 16 }}
@@ -294,15 +356,58 @@ export default function EmailDetail({ email }: { email: Email | null }) {
             )}
           </AnimatePresence>
 
-          {/* 正文内容容器 */}
+          {/* 正文内容 */}
           <div className={cn(isMobile ? "px-4 py-4" : "px-6 py-5")}>
-            <EmailContent
-              bodyHtml={displayHtml}
-              bodyText={displayText}
-            />
+            {showRawSource ? (
+              // 原始邮件信息
+              <div className="space-y-4">
+                <RawField label="Message-ID" value={email.messageId} />
+                <RawField label="From" value={email.fromName ? `${email.fromName} <${email.fromAddress}>` : email.fromAddress} />
+                <RawField label="To" value={email.toAddress} />
+                <RawField label="Recipient" value={email.recipient} />
+                <RawField label="Subject" value={email.title} />
+                <RawField label="Sent-At" value={email.sentAt} />
+                <RawField label="Received-At" value={email.receivedAt} />
+                <RawField label="Email-Type" value={email.emailType} />
+                <RawField label="Email-Result" value={email.emailResult} />
+                <RawField label="Email-Result-Text" value={email.emailResultText} />
+                {email.emailError && <RawField label="Email-Error" value={email.emailError} />}
+                <Separator />
+                <div>
+                  <span className="text-xs font-mono text-muted-foreground block mb-2">Body-Text</span>
+                  <pre className="text-xs font-mono text-foreground bg-muted/50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto">
+                    {email.bodyText || "(empty)"}
+                  </pre>
+                </div>
+                {email.bodyHtml && (
+                  <div>
+                    <span className="text-xs font-mono text-muted-foreground block mb-2">Body-HTML</span>
+                    <pre className="text-xs font-mono text-foreground bg-muted/50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all max-h-[400px] overflow-y-auto">
+                      {email.bodyHtml}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <EmailContent
+                bodyHtml={displayHtml}
+                bodyText={displayText}
+              />
+            )}
           </div>
         </motion.div>
       </ScrollArea>
     </motion.div>
+  );
+}
+
+/** 原始字段展示组件 */
+function RawField({ label, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-baseline gap-3">
+      <span className="text-xs font-mono text-muted-foreground flex-shrink-0 w-32 text-right">{label}</span>
+      <span className="text-xs font-mono text-foreground break-all">{value}</span>
+    </div>
   );
 }
