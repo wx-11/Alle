@@ -30,7 +30,7 @@ function replaceTemplateAdvanced(template: string, email: Email): string {
         if (value === null || value === undefined) {
             return '';
         }
-        return JSON.stringify(String(value)).slice(1, -1);
+        return JSON.stringify(String(value).trim()).slice(1, -1);
     });
 }
 
@@ -79,8 +79,8 @@ export default async function storeEmail(
             fromName: emailFromName,
             toAddress: email.deliveredTo || message.to,
             recipient: JSON.stringify(email.to),
-            title: email.subject || null,
-            bodyText: email.text || "",
+            title: email.subject?.trim() || null,
+            bodyText: email.text || emailText || "",
             bodyHtml: email.html || "",
             sentAt: email.date || null,
             receivedAt: new Date().toISOString(),
