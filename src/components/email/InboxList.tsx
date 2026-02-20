@@ -1,19 +1,27 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Mail, ChevronRight, ArrowLeft } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mail, ChevronRight, ArrowLeft, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import useTranslation from "@/lib/hooks/useTranslation";
 import type { Inbox } from "@/types";
+import type { MouseEvent } from "react";
 
 interface InboxListProps {
   inboxes: Inbox[];
   loading: boolean;
   onSelectInbox: (address: string) => void;
+  selectedInboxes?: Set<string>;
+  onInboxToggle?: (address: string) => void;
 }
 
-export default function InboxList({ inboxes, loading, onSelectInbox }: InboxListProps) {
+export default function InboxList({ inboxes, loading, onSelectInbox, selectedInboxes, onInboxToggle }: InboxListProps) {
   const { t } = useTranslation();
+
+  const handleIconClick = (address: string, event: MouseEvent) => {
+    event.stopPropagation();
+    onInboxToggle?.(address);
+  };
 
   if (loading && inboxes.length === 0) {
     return (
@@ -47,42 +55,77 @@ export default function InboxList({ inboxes, loading, onSelectInbox }: InboxList
   return (
     <div className="h-full overflow-y-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
       <div className="divide-y divide-border">
-        {inboxes.map((inbox, index) => (
-          <motion.div
-            key={inbox.address}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: Math.min(index * 0.04, 0.5), duration: 0.25 }}
-          >
-            <div
-              className="flex items-center gap-4 px-6 py-4 cursor-pointer transition-all duration-200 hover:bg-accent group"
-              onClick={() => onSelectInbox(inbox.address)}
-            >
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Mail className="h-5 w-5 text-primary" />
-              </div>
+        {inboxes.map((inbox, index) => {
+          const isSelected = selectedInboxes?.has(inbox.address) ?? false;
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-sm font-medium text-foreground truncate">
-                    {inbox.address}
-                  </h3>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {inbox.unread > 0 && (
-                      <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-semibold rounded-full bg-primary text-primary-foreground">
-                        {inbox.unread}
-                      </span>
+          return (
+            <motion.div
+              key={inbox.address}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: Math.min(index * 0.04, 0.5), duration: 0.25 }}
+            >
+              <div
+                className={`flex items-center gap-4 px-6 py-4 cursor-pointer transition-all duration-200 hover:bg-accent group ${
+                  isSelected ? "bg-primary/5" : ""
+                }`}
+                onClick={() => onSelectInbox(inbox.address)}
+              >
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-200 ${
+                    isSelected
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-primary/10"
+                  }`}
+                  onClick={(e) => handleIconClick(inbox.address, e)}
+                >
+                  <AnimatePresence mode="wait" initial={false}>
+                    {isSelected ? (
+                      <motion.div
+                        key="check"
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.5, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <CheckSquare className="h-5 w-5" />
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="mail"
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.5, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <Mail className="h-5 w-5 text-primary" />
+                      </motion.div>
                     )}
-                    <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                  </div>
+                  </AnimatePresence>
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("emailsCount", { count: inbox.total })}
-                </p>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="text-sm font-medium text-foreground truncate">
+                      {inbox.address}
+                    </h3>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {inbox.unread > 0 && (
+                        <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-semibold rounded-full bg-primary text-primary-foreground">
+                          {inbox.unread}
+                        </span>
+                      )}
+                      <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t("emailsCount", { count: inbox.total })}
+                  </p>
+                </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );

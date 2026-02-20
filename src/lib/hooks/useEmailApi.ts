@@ -95,6 +95,18 @@ export const useBatchDeleteEmails = () => {
   });
 };
 
+export const useBatchDeleteByInbox = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: emailApi.batchDeleteByInbox,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['emails'] });
+      queryClient.invalidateQueries({ queryKey: ['inboxes'] });
+    },
+  });
+};
+
 export const useMarkEmail = () => {
   const queryClient = useQueryClient();
   const { markEmail } = useEmailStore();

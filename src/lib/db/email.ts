@@ -119,6 +119,11 @@ const emailDB = {
     await db.delete(email).where(inArray(email.id, items));
   },
 
+  async deleteByRecipients(recipients: string[]): Promise<void> {
+    const db = getDb();
+    await db.delete(email).where(inArray(email.toAddress, recipients));
+  },
+
   async update(params: {
     id: number;
     emailResult: string | null;

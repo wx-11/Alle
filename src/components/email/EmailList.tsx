@@ -4,7 +4,7 @@ import { useCallback, useState, useTransition, useEffect, type MouseEvent } from
 import { useDevice } from "@/provider/Device";
 import useEmailStore from "@/lib/store/email";
 import { useSettingsStore } from "@/lib/store/settings";
-import { useDeleteEmail, useBatchDeleteEmails, useEmailListInfinite, useInboxes } from "@/lib/hooks/useEmailApi";
+import { useDeleteEmail, useBatchDeleteEmails, useBatchDeleteByInbox, useEmailListInfinite, useInboxes } from "@/lib/hooks/useEmailApi";
 import type { Email } from "@/types";
 import EmailListHeader from "@/components/email/EmailListHeader";
 import EmailListContent from "@/components/email/EmailListContent";
@@ -20,6 +20,7 @@ export default function EmailList() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [selectedEmails, setSelectedEmails] = useState<Set<number>>(new Set());
+  const [selectedInboxes, setSelectedInboxes] = useState<Set<string>>(new Set());
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
   const [, startTransition] = useTransition();
 
@@ -41,6 +42,7 @@ export default function EmailList() {
 
   const deleteEmailMutation = useDeleteEmail();
   const batchDeleteMutation = useBatchDeleteEmails();
+  const batchDeleteByInboxMutation = useBatchDeleteByInbox();
 
   useEffect(() => {
     if (data) {
@@ -56,6 +58,7 @@ export default function EmailList() {
   useEffect(() => {
     if (!groupByInbox) {
       setSelectedInbox(null);
+      setSelectedInboxes(new Set());
     }
   }, [groupByInbox, setSelectedInbox]);
 
@@ -117,6 +120,37 @@ export default function EmailList() {
     }
   }, [batchDeleteMutation, selectedEmails]);
 
+  // 收件箱选择：切换单个
+  const handleInboxToggle = useCallback((address: string) => {
+    setSelectedInboxes((prev) => {
+      const next = new Set(prev);
+      if (next.has(address)) {
+        next.delete(address);
+      } else {
+        next.add(address);
+      }
+      return next;
+    });
+  }, []);
+
+  // 收件箱选择：全选/取消全选
+  const handleToggleSelectAllInboxes = useCallback(() => {
+    setSelectedInboxes((prev) => {
+      if (prev.size === inboxes.length && inboxes.length > 0) {
+        return new Set();
+      }
+      return new Set(inboxes.map((inbox) => inbox.address));
+    });
+  }, [inboxes]);
+
+  // 收件箱选择：批量删除
+  const handleBatchDeleteInboxes = useCallback(async () => {
+    if (selectedInboxes.size > 0) {
+      await batchDeleteByInboxMutation.mutateAsync(Array.from(selectedInboxes));
+      setSelectedInboxes(new Set());
+    }
+  }, [batchDeleteByInboxMutation, selectedInboxes]);
+
   const handleOpenSettings = useCallback(() => {
     if (isMobile) {
       setMobileSettingsOpen(true);
@@ -137,11 +171,13 @@ export default function EmailList() {
   const handleSelectInbox = useCallback((address: string) => {
     setSelectedInbox(address);
     setSelectedEmails(new Set());
+    setSelectedInboxes(new Set());
   }, [setSelectedInbox]);
 
   const handleBackToInboxes = useCallback(() => {
     setSelectedInbox(null);
     setSelectedEmails(new Set());
+    setSelectedInboxes(new Set());
     selectEmail(null);
   }, [setSelectedInbox, selectEmail]);
 
@@ -165,6 +201,11 @@ export default function EmailList() {
             onBatchDelete={handleBatchDelete}
             onClearSelection={() => setSelectedEmails(new Set())}
             onOpenSettings={handleOpenSettings}
+            selectedInboxes={selectedInboxes}
+            inboxCount={inboxes.length}
+            onToggleSelectAllInboxes={handleToggleSelectAllInboxes}
+            onBatchDeleteInboxes={handleBatchDeleteInboxes}
+            onClearInboxSelection={() => setSelectedInboxes(new Set())}
           />
 
           {/* 分组模式下选中收件箱时显示返回头 */}
@@ -179,6 +220,8 @@ export default function EmailList() {
                 inboxes={inboxes}
                 loading={inboxesLoading || inboxesFetching}
                 onSelectInbox={handleSelectInbox}
+                selectedInboxes={selectedInboxes}
+                onInboxToggle={handleInboxToggle}
               />
             ) : (
               // 普通模式或分组模式下选中了收件箱：显示邮件列表

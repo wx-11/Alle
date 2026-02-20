@@ -88,6 +88,24 @@ export async function batchDeleteEmails(emailIds: number[]) {
     return emailIds;
 }
 
+export async function batchDeleteByInbox(addresses: string[]) {
+    const response = await apiFetch('/api/email/delete-by-inbox', {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(addresses),
+    });
+
+    const data = (await response.json()) as ApiResponse<null>;
+
+    if (!data.success) {
+        throw new ApiError(data.error || 'Failed to delete emails by inbox', response.status);
+    }
+
+    return addresses;
+}
+
 export async function updateEmail(emailId: number, emailResult: string | null, emailType: ExtractResultType) {
     const response = await apiFetch('/api/email/update', {
         method: 'PATCH',
