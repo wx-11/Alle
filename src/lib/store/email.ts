@@ -121,7 +121,8 @@ const useEmailStore = create<EmailStoreState>((set, get) => ({
     set({ filters: createDefaultFilters() });
   },
   setSelectedInbox: (inbox) => {
-    set({ selectedInbox: inbox, selectedEmailId: null });
+    // 切换收件箱时清空邮件列表，避免旧数据闪烁
+    set({ selectedInbox: inbox, selectedEmailId: null, emails: [], total: 0, hasMore: false });
   },
 }));
 
