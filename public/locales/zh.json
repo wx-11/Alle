@@ -84,5 +84,9 @@
   "selectEmailDesc": "从左侧列表中选择一封邮件以查看详细内容",
   "copyFullText": "复制全文",
   "viewRawSource": "源信息",
-  "hideRawSource": "返回"
+  "hideRawSource": "返回",
+  "revokeAllTokens": "撤销所有登录",
+  "revokeAllTokensTitle": "撤销所有登录",
+  "revokeAllTokensConfirm": "确认撤销所有登录？此操作将使所有已签发的令牌失效，所有设备都需要重新登录。",
+  "revokeAllTokensSuccess": "已撤销所有登录"
 }

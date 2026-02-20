@@ -84,5 +84,9 @@
   "selectEmailDesc": "Select an email from the list on the left to view its details",
   "copyFullText": "Copy All",
   "viewRawSource": "Source",
-  "hideRawSource": "Back"
+  "hideRawSource": "Back",
+  "revokeAllTokens": "Revoke All Sessions",
+  "revokeAllTokensTitle": "Revoke All Sessions",
+  "revokeAllTokensConfirm": "Are you sure you want to revoke all sessions? This will invalidate all issued tokens and require all devices to log in again.",
+  "revokeAllTokensSuccess": "All sessions revoked"
 }

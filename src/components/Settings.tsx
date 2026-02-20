@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useSettingsStore } from "@/lib/store/settings";
-import { Settings as SettingsIcon, LogOut, Trash2 } from "lucide-react";
+import { Settings as SettingsIcon, LogOut, Trash2, ShieldOff } from "lucide-react";
 import { useTheme } from "next-themes";
 import useAuthStore from "@/lib/store/auth";
 import useTranslation from "@/lib/hooks/useTranslation";
 import DeleteDialog from "@/components/common/DeleteDialog";
+import { revokeAllTokens } from "@/lib/api/auth";
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -219,6 +220,33 @@ export default function Settings() {
               </div>
 
               <Separator />
+
+              {/* Revoke All Sessions Button */}
+              <div className="space-y-3">
+                <DeleteDialog
+                  trigger={
+                    <Button
+                      variant="outline"
+                      className="w-full rounded-xl border-destructive/20 text-destructive hover:bg-destructive/10"
+                    >
+                      <ShieldOff className="h-4 w-4 mr-2" />
+                      {t('revokeAllTokens')}
+                    </Button>
+                  }
+                  title={t('revokeAllTokensTitle')}
+                  description={t('revokeAllTokensConfirm')}
+                  onConfirm={async () => {
+                    try {
+                      await revokeAllTokens();
+                      logout();
+                    } catch {
+                      // 401 时 apiFetch 已自动登出
+                    }
+                  }}
+                  cancelText={t('cancel')}
+                  confirmText={t('confirm')}
+                />
+              </div>
 
               {/* Logout Button */}
               <div className="space-y-3">

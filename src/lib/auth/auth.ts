@@ -1,4 +1,5 @@
 import { failure } from '@/types';
+import settingsDB from '@/lib/db/settings';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { createHash } from 'crypto';
 import { jwtVerify } from 'jose';
@@ -42,6 +43,15 @@ async function authenticate(
     if (payload.sub !== USERNAME) {
       failure(res, 'Token user mismatch', 401);
       return false;
+    }
+
+    // 检查 token 是否在撤销时间点之前签发
+    const revokedBefore = await settingsDB.get('token_revoked_before');
+    if (revokedBefore && payload.iat) {
+      if (payload.iat < Number(revokedBefore)) {
+        failure(res, 'Token has been revoked', 401);
+        return false;
+      }
     }
 
     return true;
