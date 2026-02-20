@@ -96,6 +96,7 @@ async function callOpenAI(
 
   const response = await client.chat.completions.create({
     model: env.EXTRACT_MODEL,
+    max_tokens: 16384,
     messages: [
       { role: 'system', content: prompt },
       { role: 'user', content },
@@ -119,6 +120,7 @@ async function callCloudflareAI(
       { role: 'system', content: prompt },
       { role: 'user', content },
     ],
+    max_tokens: 16384,
     stream: false,
   });
 
