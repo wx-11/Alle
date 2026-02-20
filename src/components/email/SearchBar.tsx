@@ -95,15 +95,16 @@ export default function SearchBar({ onSearch, initialSearch = "", initialRegex =
     >
       <div className="flex items-center gap-2">
         {/* 正则 toggle */}
-        <Button
-          variant={isRegex ? "default" : "outline"}
-          size="sm"
+        <button
+          type="button"
           onClick={handleToggleRegex}
-          className="h-8 px-2 text-xs font-mono flex-shrink-0"
+          className={`h-8 px-2 text-xs font-mono flex-shrink-0 rounded-md transition-colors ${
+            isRegex ? "text-primary" : "text-muted-foreground"
+          }`}
           title={t("regexMode")}
         >
           .*
-        </Button>
+        </button>
 
         {/* 搜索输入框 */}
         <div className="relative flex-1">
