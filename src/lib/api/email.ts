@@ -160,3 +160,25 @@ export async function fetchInboxes() {
 
     return data.data;
 }
+
+export async function translateEmail(content: string) {
+    const response = await apiFetch('/api/email/translate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content }),
+    });
+
+    if (!response.ok) {
+        throw new ApiError('Failed to translate email', response.status);
+    }
+
+    const data = (await response.json()) as ApiResponse<string>;
+
+    if (!data.success || !data.data) {
+        throw new ApiError(data.error || 'Failed to translate email', response.status);
+    }
+
+    return data.data;
+}

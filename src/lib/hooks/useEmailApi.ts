@@ -163,3 +163,9 @@ export const useUpdateEmail = () => {
     },
   });
 };
+
+export const useTranslateEmail = () => {
+  return useMutation({
+    mutationFn: (content: string) => emailApi.translateEmail(content),
+  });
+};

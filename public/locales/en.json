@@ -74,5 +74,12 @@
   "emailTypeNone": "None",
   "groupByInbox": "Group by Inbox",
   "groupByInboxDesc": "When enabled, emails are grouped by inbox address. Click an inbox to view its emails.",
-  "inboxes": "Inboxes"
+  "inboxes": "Inboxes",
+  "translate": "Translate",
+  "translating": "Translating",
+  "showOriginal": "Original",
+  "translatedHint": "Translated by AI, for reference only",
+  "noSubject": "(No Subject)",
+  "selectEmail": "Select an email",
+  "selectEmailDesc": "Select an email from the list on the left to view its details"
 }

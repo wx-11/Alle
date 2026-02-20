@@ -47,5 +47,4 @@ next-env.d.ts
 # pwa
 public/workbox-*.js
 public/sw.js
-.claude
 .serena

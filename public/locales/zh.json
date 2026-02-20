@@ -74,5 +74,12 @@
   "emailTypeNone": "无",
   "groupByInbox": "按收件箱分组",
   "groupByInboxDesc": "启用后邮件将按收件箱地址分组显示，点击收件箱查看对应邮件",
-  "inboxes": "收件箱列表"
+  "inboxes": "收件箱列表",
+  "translate": "翻译",
+  "translating": "翻译中",
+  "showOriginal": "原文",
+  "translatedHint": "以下内容由 AI 翻译，仅供参考",
+  "noSubject": "（无主题）",
+  "selectEmail": "选择一封邮件",
+  "selectEmailDesc": "从左侧列表中选择一封邮件以查看详细内容"
 }
