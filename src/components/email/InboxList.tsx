@@ -77,7 +77,6 @@ interface InboxListItemProps {
 
 function InboxListItem({ inbox, index, isSelected, onSelectInbox, onInboxToggle }: InboxListItemProps) {
   const { t } = useTranslation();
-  const [copied, setCopied] = useState(false);
 
   const handleIconClick = useCallback((event: MouseEvent) => {
     event.stopPropagation();
@@ -87,13 +86,6 @@ function InboxListItem({ inbox, index, isSelected, onSelectInbox, onInboxToggle 
   const handleLongPress = useCallback(() => {
     onInboxToggle?.(inbox.address);
   }, [inbox.address, onInboxToggle]);
-
-  const handleCopyAddress = useCallback((event: MouseEvent) => {
-    event.stopPropagation();
-    navigator.clipboard.writeText(inbox.address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }, [inbox.address]);
 
   const longPressHandlers = useLongPress({ onLongPress: handleLongPress });
 
@@ -149,36 +141,6 @@ function InboxListItem({ inbox, index, isSelected, onSelectInbox, onInboxToggle 
               {inbox.address}
             </h3>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <button
-                type="button"
-                onClick={handleCopyAddress}
-                className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
-                title={copied ? t("copied") : t("copyFullText")}
-              >
-                <AnimatePresence mode="wait">
-                  {copied ? (
-                    <motion.div
-                      key="check"
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      exit={{ scale: 0, rotate: 180 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Check className="h-3.5 w-3.5 text-chart-2" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="copy"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </button>
               {inbox.unread > 0 && (
                 <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-semibold rounded-full bg-primary text-primary-foreground">
                   {inbox.unread}
@@ -202,6 +164,15 @@ interface InboxHeaderProps {
 }
 
 export function InboxBackHeader({ selectedInbox, onBack }: InboxHeaderProps) {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(selectedInbox);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [selectedInbox]);
+
   return (
     <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-card/50">
       <Button variant="ghost" size="icon" onClick={onBack} className="h-8 w-8">
@@ -210,6 +181,36 @@ export function InboxBackHeader({ selectedInbox, onBack }: InboxHeaderProps) {
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-foreground truncate">{selectedInbox}</p>
       </div>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+        title={copied ? t("copied") : t("copyFullText")}
+      >
+        <AnimatePresence mode="wait">
+          {copied ? (
+            <motion.div
+              key="check"
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              exit={{ scale: 0, rotate: 180 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Check className="h-4 w-4 text-chart-2" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="copy"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Copy className="h-4 w-4" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </button>
     </div>
   );
 }
