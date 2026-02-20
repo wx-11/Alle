@@ -48,7 +48,7 @@ export default function EmailContent({ bodyHtml, bodyText }: { bodyHtml: string 
           title="Email Content"
         />
       ) : (
-        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+        <p className="text-[15px] text-foreground whitespace-pre-wrap leading-7 max-w-[65ch]">
           {bodyText}
         </p>
       )}
