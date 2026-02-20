@@ -195,16 +195,15 @@ export default function Settings() {
 
               <Separator />
 
-              {/* Revoke All Sessions Button */}
-              <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3">
                 <DeleteDialog
                   trigger={
                     <Button
                       variant="outline"
-                      className="w-full rounded-xl border-destructive/20 text-destructive hover:bg-destructive/10"
+                      className="w-full rounded-xl border-destructive/20 text-destructive hover:bg-destructive/10 h-auto py-2.5 px-2 text-xs"
                     >
-                      <ShieldOff className="h-4 w-4 mr-2" />
-                      {t('revokeAllTokens')}
+                      <ShieldOff className="h-4 w-4 mr-1.5 flex-shrink-0" />
+                      <span className="truncate">{t('revokeAllTokens')}</span>
                     </Button>
                   }
                   title={t('revokeAllTokensTitle')}
@@ -220,18 +219,15 @@ export default function Settings() {
                   cancelText={t('cancel')}
                   confirmText={t('confirm')}
                 />
-              </div>
 
-              {/* Logout Button */}
-              <div className="space-y-3">
                 <DeleteDialog
                   trigger={
                     <Button
                       variant="destructive"
-                      className="w-full rounded-xl"
+                      className="w-full rounded-xl h-auto py-2.5 px-2 text-xs"
                     >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      {t('logout')}
+                      <LogOut className="h-4 w-4 mr-1.5 flex-shrink-0" />
+                      <span className="truncate">{t('logout')}</span>
                     </Button>
                   }
                   title={t('logoutTitle')}
@@ -240,18 +236,15 @@ export default function Settings() {
                   cancelText={t('cancel')}
                   confirmText={t('confirm')}
                 />
-              </div>
 
-              {/* Clear Cache Button */}
-              <div className="space-y-3">
                 <DeleteDialog
                   trigger={
                     <Button
                       variant="outline"
-                      className="w-full rounded-xl border-destructive/20 text-destructive hover:bg-destructive/10"
+                      className="w-full rounded-xl border-destructive/20 text-destructive hover:bg-destructive/10 h-auto py-2.5 px-2 text-xs"
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      {t('clearCache')}
+                      <Trash2 className="h-4 w-4 mr-1.5 flex-shrink-0" />
+                      <span className="truncate">{t('clearCache')}</span>
                     </Button>
                   }
                   title={t('clearCacheTitle')}

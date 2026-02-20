@@ -54,13 +54,13 @@ export default function EmailList() {
     }
   }, [data]);
 
-  // 切换分组模式时，重置选中的收件箱
+  // 切换分组模式时，重置选中的收件箱（不清空邮件数据）
   useEffect(() => {
     if (!groupByInbox) {
-      setSelectedInbox(null);
+      useEmailStore.setState({ selectedInbox: null, selectedEmailId: null });
       setSelectedInboxes(new Set());
     }
-  }, [groupByInbox, setSelectedInbox]);
+  }, [groupByInbox]);
 
   const loading = isLoading || isFetching;
   const selectedEmail = emails.find((e) => e.id === selectedEmailId) || null;

@@ -20,8 +20,9 @@ const useI18nStore = create<I18nState>((set, get) => ({
     loadTranslations: async (locale: string): Promise<Translations> => {
         const state = get();
 
-        // 1. 如果已缓存，直接返回
+        // 1. 如果已缓存，更新 currentLocale 并直接返回
         if (state.translations[locale]) {
+            set({ currentLocale: locale });
             return state.translations[locale];
         }
 
