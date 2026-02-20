@@ -9,7 +9,7 @@ declare namespace Cloudflare {
 		ENABLE_AUTO_DEL: "false";
 		AUTO_DEL_TYPE: "auth_code,auth_link";
 		AUTO_DEL_TIME: "3600";
-		WEBHOOK_URL: string;
+		WEBHOOK_URL: "";
 		WEBHOOK_TYPE: "";
 		WEBHOOK_TEMPLATE: "";
 		TELEGRAM_BOT_TOKEN: string;
