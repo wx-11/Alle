@@ -145,10 +145,10 @@ function InboxListItem({ inbox, index, isSelected, onSelectInbox, onInboxToggle 
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <h3 className="text-sm font-medium text-foreground truncate">
-                {inbox.address}
-              </h3>
+            <h3 className="text-sm font-medium text-foreground truncate">
+              {inbox.address}
+            </h3>
+            <div className="flex items-center gap-2 flex-shrink-0">
               <button
                 type="button"
                 onClick={handleCopyAddress}
@@ -179,8 +179,6 @@ function InboxListItem({ inbox, index, isSelected, onSelectInbox, onInboxToggle 
                   )}
                 </AnimatePresence>
               </button>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
               {inbox.unread > 0 && (
                 <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-semibold rounded-full bg-primary text-primary-foreground">
                   {inbox.unread}
