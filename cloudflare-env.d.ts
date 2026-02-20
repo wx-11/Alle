@@ -9,7 +9,7 @@ declare namespace Cloudflare {
 		ENABLE_AUTO_DEL: "false";
 		AUTO_DEL_TYPE: "auth_code,auth_link";
 		AUTO_DEL_TIME: "3600";
-		WEBHOOK_URL: "";
+		WEBHOOK_URL: string;
 		WEBHOOK_TYPE: "";
 		WEBHOOK_TEMPLATE: "";
 		TELEGRAM_BOT_TOKEN: string;
@@ -24,6 +24,7 @@ declare namespace Cloudflare {
 		EXTRACT_MODEL: string;
 		OPENAI_API_KEY: string;
 		OPENAI_BASE_URL: string;
+		AI_MAX_TOKENS: string;
 		DB: D1Database;
 		AI: Ai;
 		ASSETS: Fetcher;

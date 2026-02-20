@@ -94,9 +94,11 @@ async function callOpenAI(
     baseURL: env.OPENAI_BASE_URL,
   });
 
+  const maxTokens = Number(env.AI_MAX_TOKENS) || 16384;
+
   const response = await client.chat.completions.create({
     model: env.EXTRACT_MODEL,
-    max_tokens: 16384,
+    max_tokens: maxTokens,
     messages: [
       { role: 'system', content: prompt },
       { role: 'user', content },
@@ -115,12 +117,14 @@ async function callCloudflareAI(
   prompt: string,
   env: CloudflareEnv
 ): Promise<string> {
+  const maxTokens = Number(env.AI_MAX_TOKENS) || 16384;
+
   const result = await env.AI.run(env.EXTRACT_MODEL as keyof AiModels, {
     messages: [
       { role: 'system', content: prompt },
       { role: 'user', content },
     ],
-    max_tokens: 16384,
+    max_tokens: maxTokens,
     stream: false,
   });
 
