@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Search, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import useTranslation from "@/lib/hooks/useTranslation";
 
@@ -92,13 +91,14 @@ export default function SearchBar({ onSearch, initialSearch = "", initialRegex =
       animate={{ opacity: 1, height: "auto" }}
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       className="px-4 py-2 border-b border-border bg-card/50"
+      style={{ touchAction: "manipulation" }}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         {/* 正则 toggle */}
         <button
           type="button"
-          onClick={handleToggleRegex}
-          className={`h-8 px-2 text-xs font-mono flex-shrink-0 rounded-md transition-colors ${
+          onPointerDown={(e) => { e.stopPropagation(); handleToggleRegex(); }}
+          className={`min-w-[36px] min-h-[36px] flex items-center justify-center text-xs font-mono flex-shrink-0 rounded-md transition-colors cursor-pointer select-none ${
             isRegex ? "text-primary" : "text-muted-foreground"
           }`}
           title={t("regexMode")}
@@ -114,15 +114,15 @@ export default function SearchBar({ onSearch, initialSearch = "", initialRegex =
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder={t("searchPlaceholder")}
-            className={`h-8 pr-8 text-sm ${regexError ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50" : ""}`}
+            className={`h-9 pr-8 text-sm ${regexError ? "border-destructive focus-visible:border-destructive focus-visible:ring-destructive/50" : ""}`}
             aria-invalid={regexError}
           />
           {/* 清除按钮 */}
           {hasInput && (
             <button
               type="button"
-              onClick={handleClear}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); handleClear(); }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -130,15 +130,14 @@ export default function SearchBar({ onSearch, initialSearch = "", initialRegex =
         </div>
 
         {/* 搜索按钮 */}
-        <Button
-          variant="default"
-          size="icon"
-          className="h-8 w-8 flex-shrink-0"
-          onClick={handleSubmit}
+        <button
+          type="button"
+          onPointerDown={(e) => { e.stopPropagation(); if (!regexError) handleSubmit(); }}
           disabled={regexError}
+          className="min-w-[36px] min-h-[36px] flex items-center justify-center flex-shrink-0 rounded-md bg-primary text-primary-foreground hover:bg-primary-hover transition-all cursor-pointer select-none disabled:opacity-50 disabled:pointer-events-none"
         >
           <Search className="h-4 w-4" />
-        </Button>
+        </button>
       </div>
 
       {/* 正则错误提示 */}
