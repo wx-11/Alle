@@ -8,12 +8,16 @@ export interface EmailFilters {
   readStatus: ReadStatusFilter;
   emailTypes: ExtractResultType[];
   recipients: string[];
+  search: string;
+  searchRegex: boolean;
 }
 
 const createDefaultFilters = (): EmailFilters => ({
   readStatus: 'all',
   emailTypes: [],
   recipients: [],
+  search: '',
+  searchRegex: false,
 });
 
 const dedupeEmails = (emails: Email[]): Email[] => {

@@ -92,5 +92,8 @@
   "inboxesCount": "{{count}} 个信箱",
   "selectedInboxCount": "已选择 {{count}} 个收件箱",
   "batchDeleteInboxConfirm": "确认批量删除收件箱邮件",
-  "batchDeleteInboxDesc": "确定要删除选中的 <strong>{{count}}</strong> 个收件箱中的所有邮件吗？此操作无法撤销。"
+  "batchDeleteInboxDesc": "确定要删除选中的 <strong>{{count}}</strong> 个收件箱中的所有邮件吗？此操作无法撤销。",
+  "searchPlaceholder": "搜索邮件...",
+  "regexMode": "正则",
+  "invalidRegex": "无效的正则表达式"
 }

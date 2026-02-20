@@ -7,12 +7,22 @@ import type { Email } from '@/types';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { ListParams } from '@/types';
 
+function matchesRegex(email: Email, regex: RegExp): boolean {
+  return (
+    (email.title != null && regex.test(email.title)) ||
+    (email.bodyText != null && regex.test(email.bodyText)) ||
+    (email.fromName != null && regex.test(email.fromName)) ||
+    (email.fromAddress != null && regex.test(email.fromAddress)) ||
+    (email.toAddress != null && regex.test(email.toAddress))
+  );
+}
+
 async function listHandler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
     return failure(res, 'Method not allowed', 405);
   }
 
-  const { limit, offset, read_status, email_type, recipient } = req.query;
+  const { limit, offset, read_status, email_type, recipient, search, search_regex } = req.query;
 
   if (limit !== undefined) {
     const limitNum = Number(limit);
@@ -60,15 +70,42 @@ async function listHandler(req: NextApiRequest, res: NextApiResponse) {
     recipientValue = normalizedRecipients;
   }
 
+  const searchValue = typeof search === 'string' ? search.trim() : undefined;
+  const isRegex = search_regex === '1' || search_regex === 'true';
+
+  // 正则模式下校验合法性
+  let searchRegExp: RegExp | null = null;
+  if (searchValue && isRegex) {
+    try {
+      searchRegExp = new RegExp(searchValue, 'i');
+    } catch {
+      return failure(res, 'Invalid regex pattern', 400);
+    }
+  }
+
   const params: ListParams = {
     limit: limit ? Number(limit) : 100,
     offset: offset ? Number(offset) : 0,
     readStatus: read_status ? Number(read_status) : undefined,
     emailType: email_type as string | undefined,
     recipient: recipientValue,
+    // 普通模式：透传 search 给 DB；正则模式：不传（JS 过滤）
+    search: searchValue && !isRegex ? searchValue : undefined,
   };
 
   try {
+    if (searchRegExp) {
+      // 正则模式：拉取全量数据（保留其他过滤条件），JS 过滤 + 手动分页
+      const requestedLimit = params.limit!;
+      const requestedOffset = params.offset!;
+      // 拉全量：不限制 limit/offset
+      const allData = await emailDB.list({ ...params, limit: 10000, offset: 0 });
+      const filtered = allData.filter((e) => matchesRegex(e, searchRegExp!));
+      const total = filtered.length;
+      const data = filtered.slice(requestedOffset, requestedOffset + requestedLimit);
+      return success<Email[]>(res, data, 200, { total });
+    }
+
     const [data, total] = await Promise.all([
       emailDB.list(params),
       emailDB.count(params),

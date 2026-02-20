@@ -14,6 +14,7 @@ import MobileSettingsDrawer from "@/components/email/MobileSettingsDrawer";
 import EmailDetail from "@/components/email/EmailDetail";
 import Settings from "@/components/Settings";
 import InboxList, { InboxBackHeader } from "@/components/email/InboxList";
+import SearchBar from "@/components/email/SearchBar";
 
 export default function EmailList() {
   const { isMobile } = useDevice();
@@ -27,9 +28,17 @@ export default function EmailList() {
   const { groupByInbox } = useSettingsStore();
   const selectedInbox = useEmailStore((state) => state.selectedInbox);
   const setSelectedInbox = useEmailStore((state) => state.setSelectedInbox);
+  const filters = useEmailStore((state) => state.filters);
+  const updateFilters = useEmailStore((state) => state.updateFilters);
 
-  // 收件箱列表数据（分组模式）
-  const { data: inboxesData, isLoading: inboxesLoading, isFetching: inboxesFetching, refetch: refetchInboxes } = useInboxes();
+  // 搜索处理
+  const handleSearch = useCallback((keyword: string, isRegex: boolean) => {
+    updateFilters({ search: keyword, searchRegex: isRegex });
+  }, [updateFilters]);
+
+  // 收件箱列表数据（分组模式），传入搜索参数联动过滤
+  const searchParams = filters.search ? { search: filters.search, searchRegex: filters.searchRegex } : undefined;
+  const { data: inboxesData, isLoading: inboxesLoading, isFetching: inboxesFetching, refetch: refetchInboxes } = useInboxes(searchParams);
   const inboxes = inboxesData ?? [];
 
   // 邮件列表数据
@@ -213,6 +222,13 @@ export default function EmailList() {
           {groupByInbox && selectedInbox && (
             <InboxBackHeader selectedInbox={selectedInbox} onBack={handleBackToInboxes} />
           )}
+
+          {/* 搜索栏 */}
+          <SearchBar
+            onSearch={handleSearch}
+            initialSearch={filters.search}
+            initialRegex={filters.searchRegex}
+          />
 
           <div className="flex-1 overflow-hidden">
             {showInboxList ? (

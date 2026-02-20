@@ -26,7 +26,7 @@ const email = sqliteTable('email', {
 const emailDB = {
   async list(params: ListParams = {}): Promise<Email[]> {
     const db = getDb();
-    const { limit = 100, offset = 0, readStatus, emailType, recipient } = params;
+    const { limit = 100, offset = 0, readStatus, emailType, recipient, search } = params;
 
     const conditions = [];
 
@@ -52,6 +52,13 @@ const emailDB = {
       } else if (recipients.length === 1) {
         conditions.push(sql`${email.toAddress} = ${recipients[0]}`);
       }
+    }
+
+    if (search) {
+      const kw = `%${search}%`;
+      conditions.push(
+        sql`(${email.title} LIKE ${kw} OR ${email.bodyText} LIKE ${kw} OR ${email.fromName} LIKE ${kw} OR ${email.fromAddress} LIKE ${kw} OR ${email.toAddress} LIKE ${kw})`
+      );
     }
 
     let query;
@@ -73,7 +80,7 @@ const emailDB = {
 
   async count(params: ListParams = {}): Promise<number> {
     const db = getDb();
-    const { readStatus, emailType, recipient } = params;
+    const { readStatus, emailType, recipient, search } = params;
 
     const conditions = [];
 
@@ -99,6 +106,13 @@ const emailDB = {
       } else if (recipients.length === 1) {
         conditions.push(sql`${email.toAddress} = ${recipients[0]}`);
       }
+    }
+
+    if (search) {
+      const kw = `%${search}%`;
+      conditions.push(
+        sql`(${email.title} LIKE ${kw} OR ${email.bodyText} LIKE ${kw} OR ${email.fromName} LIKE ${kw} OR ${email.fromAddress} LIKE ${kw} OR ${email.toAddress} LIKE ${kw})`
+      );
     }
 
     let query;
@@ -215,8 +229,19 @@ const emailDB = {
     return recipients.map(r => r.toAddress).filter(Boolean) as string[];
   },
 
-  async getRecipientsWithCount(): Promise<{ address: string; total: number; unread: number }[]> {
+  async getRecipientsWithCount(search?: string): Promise<{ address: string; total: number; unread: number }[]> {
     const db = getDb();
+
+    const conditions = [sql`${email.toAddress} IS NOT NULL`];
+
+    if (search) {
+      const kw = `%${search}%`;
+      conditions.push(
+        sql`(${email.title} LIKE ${kw} OR ${email.bodyText} LIKE ${kw} OR ${email.fromName} LIKE ${kw} OR ${email.fromAddress} LIKE ${kw} OR ${email.toAddress} LIKE ${kw})`
+      );
+    }
+
+    const whereClause = conditions.reduce((acc, condition) => sql`${acc} AND ${condition}`);
 
     const rows = await db
       .select({
@@ -225,7 +250,7 @@ const emailDB = {
         unread: sql<number>`sum(case when ${email.readStatus} = 0 then 1 else 0 end)`,
       })
       .from(email)
-      .where(sql`${email.toAddress} IS NOT NULL`)
+      .where(whereClause)
       .groupBy(email.toAddress)
       .orderBy(desc(sql`count(*)`));
 

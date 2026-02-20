@@ -92,5 +92,8 @@
   "inboxesCount": "{{count}} mailboxes",
   "selectedInboxCount": "{{count}} inboxes selected",
   "batchDeleteInboxConfirm": "Confirm Delete Inbox Emails",
-  "batchDeleteInboxDesc": "Are you sure you want to delete all emails in the selected <strong>{{count}}</strong> inboxes? This action cannot be undone."
+  "batchDeleteInboxDesc": "Are you sure you want to delete all emails in the selected <strong>{{count}}</strong> inboxes? This action cannot be undone.",
+  "searchPlaceholder": "Search emails...",
+  "regexMode": "Regex",
+  "invalidRegex": "Invalid regex"
 }

@@ -8,6 +8,8 @@ interface FetchEmailsParams {
     readStatus?: number;
     emailTypes?: ExtractResultType[];
     recipients?: string[];
+    search?: string;
+    searchRegex?: boolean;
 }
 
 export async function fetchEmails({
@@ -16,6 +18,8 @@ export async function fetchEmails({
     readStatus,
     emailTypes = [],
     recipients = [],
+    search,
+    searchRegex,
 }: FetchEmailsParams = {}) {
     const searchParams = new URLSearchParams({
         limit: String(limit),
@@ -32,6 +36,13 @@ export async function fetchEmails({
 
     if (recipients.length > 0) {
         searchParams.set('recipient', recipients.join(','));
+    }
+
+    if (search) {
+        searchParams.set('search', search);
+        if (searchRegex) {
+            searchParams.set('search_regex', '1');
+        }
     }
 
     const response = await apiFetch(`/api/email/list?${searchParams.toString()}`);
@@ -163,8 +174,24 @@ export async function mark(id: number, isRead: boolean) {
     return { emailId: id, isRead };
 }
 
-export async function fetchInboxes() {
-    const response = await apiFetch('/api/email/inboxes');
+export interface FetchInboxesParams {
+    search?: string;
+    searchRegex?: boolean;
+}
+
+export async function fetchInboxes(params?: FetchInboxesParams) {
+    const searchParams = new URLSearchParams();
+
+    if (params?.search) {
+        searchParams.set('search', params.search);
+        if (params.searchRegex) {
+            searchParams.set('search_regex', '1');
+        }
+    }
+
+    const qs = searchParams.toString();
+    const url = qs ? `/api/email/inboxes?${qs}` : '/api/email/inboxes';
+    const response = await apiFetch(url);
 
     if (!response.ok) {
         throw new ApiError('Failed to fetch inboxes', response.status);

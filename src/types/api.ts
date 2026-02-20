@@ -52,4 +52,6 @@ export interface ListParams {
   readStatus?: number;
   emailType?: string;
   recipient?: string;
+  search?: string;
+  searchRegex?: boolean;
 }

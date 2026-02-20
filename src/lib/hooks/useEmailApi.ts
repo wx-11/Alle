@@ -34,11 +34,14 @@ export const useEmailListInfinite = () => {
 
   const readStatusParam = filters.readStatus === 'read' ? 1 : filters.readStatus === 'unread' ? 0 : undefined;
 
+  const searchValue = filters.search || '';
+  const searchRegex = filters.searchRegex;
+
   // 分组模式下每页 20 条，普通模式 50 条
   const pageSize = groupByInbox ? 20 : 50;
 
   return useInfiniteQuery({
-    queryKey: ['emails', { readStatus: filters.readStatus, emailTypes: normalizedEmailTypes, recipients: normalizedRecipients, pageSize }],
+    queryKey: ['emails', { readStatus: filters.readStatus, emailTypes: normalizedEmailTypes, recipients: normalizedRecipients, pageSize, search: searchValue, searchRegex }],
     queryFn: async ({ pageParam = 0 }) => {
       const result = await emailApi.fetchEmails({
         limit: pageSize,
@@ -46,6 +49,8 @@ export const useEmailListInfinite = () => {
         readStatus: readStatusParam,
         emailTypes: normalizedEmailTypes,
         recipients: normalizedRecipients,
+        search: searchValue || undefined,
+        searchRegex,
       });
 
       return {
@@ -147,10 +152,12 @@ export const useRecipients = () => {
   });
 };
 
-export const useInboxes = () => {
+export const useInboxes = (searchParams?: { search?: string; searchRegex?: boolean }) => {
   return useQuery({
-    queryKey: ['inboxes'],
-    queryFn: emailApi.fetchInboxes,
+    queryKey: ['inboxes', { search: searchParams?.search || '', searchRegex: searchParams?.searchRegex || false }],
+    queryFn: () => emailApi.fetchInboxes(
+      searchParams?.search ? { search: searchParams.search, searchRegex: searchParams.searchRegex } : undefined
+    ),
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     staleTime: 0,
