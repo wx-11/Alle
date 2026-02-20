@@ -1,11 +1,12 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { useDevice } from "@/provider/Device";
 import { CheckSquare } from "lucide-react";
 import { useEmailListInteractions } from "@/components/email/EmailListInteractionsContext";
 import useFormatTime from "@/lib/hooks/useFormatTime";
+import useLongPress from "@/lib/hooks/useLongPress";
 import EmailAvatar from "@/components/email/EmailAvatar";
 import EmailActions from "@/components/email/EmailActions";
 import VerificationDisplay from "@/components/email/VerificationDisplay";
@@ -33,6 +34,14 @@ export default function EmailListItem({
   const isRead = email.readStatus === 1;
   const isUnread = !isRead;
 
+  const handleLongPress = useCallback(() => {
+    // 长按触发选中，模拟一个合成事件
+    const syntheticEvent = { stopPropagation: () => {} } as React.MouseEvent;
+    onAvatarToggle(email, syntheticEvent);
+  }, [email, onAvatarToggle]);
+
+  const longPressHandlers = useLongPress({ onLongPress: handleLongPress });
+
   return (
     <motion.div
       key={email.id}
@@ -46,6 +55,7 @@ export default function EmailListItem({
           : "border-l-transparent hover:bg-accent"
           }`}
         onClick={() => onEmailClick(email)}
+        {...longPressHandlers}
       >
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">

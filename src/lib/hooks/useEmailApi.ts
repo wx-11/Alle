@@ -63,7 +63,7 @@ export const useEmailListInfinite = () => {
     enabled: !(groupByInbox && !selectedInbox),
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    staleTime: 5000,
+    staleTime: 0,
   });
 };
 
@@ -153,7 +153,7 @@ export const useInboxes = () => {
     queryFn: emailApi.fetchInboxes,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
-    staleTime: 5000,
+    staleTime: 0,
   });
 };
 

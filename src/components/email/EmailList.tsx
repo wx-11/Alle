@@ -206,6 +206,7 @@ export default function EmailList() {
             onToggleSelectAllInboxes={handleToggleSelectAllInboxes}
             onBatchDeleteInboxes={handleBatchDeleteInboxes}
             onClearInboxSelection={() => setSelectedInboxes(new Set())}
+            onBackToInboxes={handleBackToInboxes}
           />
 
           {/* 分组模式下选中收件箱时显示返回头 */}

@@ -221,21 +221,20 @@ export default function EmailDetail({ email }: { email: Email | null }) {
                 </span>
               </div>
 
-              {/* 收件人 + 时间 */}
-              <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground flex-wrap">
+              {/* 收件人 */}
+              <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
                 <span>{t("to")}</span>
                 <span className="text-foreground/70 truncate max-w-[200px]">
                   {email.toAddress}
                 </span>
-                {email.sentAt && (
-                  <>
-                    <span className="text-border">·</span>
-                    <span className="flex-shrink-0">
-                      {formatFullTime(email.sentAt)}
-                    </span>
-                  </>
-                )}
               </div>
+
+              {/* 时间 */}
+              {email.sentAt && (
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {formatFullTime(email.sentAt)}
+                </div>
+              )}
 
               {/* 操作按钮栏 */}
               {hasContent && (

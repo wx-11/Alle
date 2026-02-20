@@ -22,6 +22,8 @@ interface EmailListHeaderProps {
   onToggleSelectAllInboxes?: () => void;
   onBatchDeleteInboxes?: () => Promise<void> | void;
   onClearInboxSelection?: () => void;
+  // 返回收件箱列表
+  onBackToInboxes?: () => void;
 }
 
 export default function EmailListHeader({
@@ -37,6 +39,7 @@ export default function EmailListHeader({
   onToggleSelectAllInboxes,
   onBatchDeleteInboxes,
   onClearInboxSelection,
+  onBackToInboxes,
 }: EmailListHeaderProps) {
   const { t } = useTranslation();
   const totalCount = useEmailStore((state) => state.total);
@@ -67,7 +70,12 @@ export default function EmailListHeader({
       className="flex items-center justify-between px-6 py-3 border-b"
     >
       <div>
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1
+          className={`text-2xl font-bold text-foreground ${
+            groupByInbox && selectedInbox ? "cursor-pointer hover:text-primary transition-colors" : ""
+          }`}
+          onClick={groupByInbox && selectedInbox ? onBackToInboxes : undefined}
+        >
           {showInboxListMode ? t("inboxes") : t("inbox")}
         </h1>
         <p className="text-sm text-muted-foreground">
