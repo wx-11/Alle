@@ -51,17 +51,17 @@ export default function EmailDetail({ email }: { email: Email | null }) {
       return;
     }
 
-    const content = email.bodyText || email.bodyHtml || '';
-    if (!content) return;
+    const content = email.bodyText || '';
+    if (!content && !email.bodyHtml) return;
 
-    // 同时发送纯文本和 HTML，服务端分别翻译
+    // bodyText 用于语言检测，bodyHtml 用于 HTML 翻译
     const contentHtml = email.bodyHtml || undefined;
 
     translateMutation.mutate({ content, contentHtml }, {
       onSuccess: (result) => {
         setTranslatedCache((prev) => ({
           ...prev,
-          [email.id]: { text: result.text, html: result.html ?? undefined },
+          [email.id]: { text: result.text ?? undefined, html: result.html ?? undefined },
         }));
         setShowTranslated(true);
       },

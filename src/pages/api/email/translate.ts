@@ -152,8 +152,8 @@ async function translateHandler(req: NextApiRequest, res: NextApiResponse) {
 
   const { content, contentHtml } = req.body as { content?: string; contentHtml?: string };
 
-  if (!content || typeof content !== 'string') {
-    return failure(res, 'content is required and must be a string', 400);
+  if ((!content || typeof content !== 'string') && (!contentHtml || typeof contentHtml !== 'string')) {
+    return failure(res, 'content or contentHtml is required', 400);
   }
 
   const totalLength = (content?.length ?? 0) + (contentHtml?.length ?? 0);
@@ -164,14 +164,19 @@ async function translateHandler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { env } = await getCloudflareContext();
 
-    const lang = detectLanguage(content);
+    // 用纯文本检测语言（更准确，不受 HTML 标签干扰）
+    const detectSource = content || contentHtml || '';
+    const lang = detectLanguage(detectSource);
     const targetLang = lang === 'zh' ? 'English' : 'Simplified Chinese';
 
-    // 纯文本翻译（始终执行，作为 text 结果）
-    const plainPrompt = buildPlainTextPrompt(targetLang);
-    const processed = preProcess(content);
-    const translatedPlain = await translate(processed, plainPrompt, env);
-    const textResult = postProcess(translatedPlain, content);
+    // 纯文本翻译（有 content 才执行）
+    let textResult: string | null = null;
+    if (content && content.length > 0) {
+      const plainPrompt = buildPlainTextPrompt(targetLang);
+      const processed = preProcess(content);
+      const translatedPlain = await translate(processed, plainPrompt, env);
+      textResult = postProcess(translatedPlain, content);
+    }
 
     // HTML 翻译（如果有 contentHtml 则额外翻译）
     let htmlResult: string | null = null;
@@ -186,7 +191,7 @@ async function translateHandler(req: NextApiRequest, res: NextApiResponse) {
       }
     }
 
-    return success<{ text: string; html: string | null }>(res, { text: textResult, html: htmlResult });
+    return success<{ text: string | null; html: string | null }>(res, { text: textResult, html: htmlResult });
   } catch (e) {
     console.error('Translation error:', e);
     const errorMessage = e instanceof Error ? e.message : String(e);

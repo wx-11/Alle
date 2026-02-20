@@ -162,7 +162,7 @@ export async function fetchInboxes() {
 }
 
 export interface TranslateResult {
-    text: string;
+    text: string | null;
     html: string | null;
 }
 
