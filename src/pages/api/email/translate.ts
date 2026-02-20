@@ -6,18 +6,28 @@ import { success, failure } from '@/types';
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const TRANSLATE_PROMPT = `You are a professional translator. Translate the following email content accurately and naturally.
+const TRANSLATE_PROMPT = `You are a professional translator. Your ONLY job is to translate the human-readable text strings in the input.
 
-# Rules
-1. Detect the source language automatically.
-2. If the source language is Chinese (Simplified or Traditional), translate to English.
-3. If the source language is any other language, translate to Simplified Chinese.
-4. Preserve the original formatting structure (paragraphs, line breaks, lists, etc.).
-5. Translate naturally — do not translate literally word-by-word. Adapt to the target language's conventions.
-6. Keep proper nouns, brand names, URLs, email addresses, and code snippets unchanged.
-7. Keep the tone consistent with the original (formal/informal/technical).
-8. Do NOT add any notes, explanations, or commentary — return ONLY the translated text.
-9. If the content contains HTML tags, preserve them and only translate the text content within the tags.`;
+# Language Direction
+- If the text is Chinese (Simplified or Traditional) → translate to English.
+- If the text is any other language → translate to Simplified Chinese.
+
+# What to Translate
+- ONLY translate human-readable text strings (words, sentences, paragraphs).
+
+# What to Keep UNCHANGED (do NOT touch)
+- ALL HTML tags, attributes, and structure (e.g. <div class="x">, <a href="...">, <br/>, &nbsp;)
+- ALL URLs, email addresses, domain names
+- ALL numbers, dates, timestamps in their original format
+- ALL punctuation and symbols that are part of formatting (—, ·, |, /, etc.)
+- ALL code snippets, variable names, CSS classes
+- ALL proper nouns, brand names, product names
+- ALL line breaks, whitespace, indentation — preserve the exact same structure
+
+# Output Rules
+- Return ONLY the translated result. No notes, no explanations, no markdown wrappers.
+- The output must have the EXACT same structure and formatting as the input.
+- If the input is HTML, the output must be valid HTML with identical tag structure.`;
 
 async function translateWithOpenAI(
   content: string,
