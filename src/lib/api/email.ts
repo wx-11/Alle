@@ -1,6 +1,6 @@
 import { apiFetch, ApiError } from './client';
 
-import type { Email, ApiResponse, ExtractResultType } from '@/types';
+import type { Email, ApiResponse, ExtractResultType, Inbox } from '@/types';
 
 interface FetchEmailsParams {
     limit?: number;
@@ -143,4 +143,20 @@ export async function mark(id: number, isRead: boolean) {
     }
 
     return { emailId: id, isRead };
+}
+
+export async function fetchInboxes() {
+    const response = await apiFetch('/api/email/inboxes');
+
+    if (!response.ok) {
+        throw new ApiError('Failed to fetch inboxes', response.status);
+    }
+
+    const data = (await response.json()) as ApiResponse<Inbox[]>;
+
+    if (!data.success || !data.data) {
+        throw new ApiError(data.error || 'Failed to fetch inboxes', response.status);
+    }
+
+    return data.data;
 }

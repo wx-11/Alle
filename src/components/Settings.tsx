@@ -21,10 +21,12 @@ export default function Settings() {
     language: storedLanguage,
     autoRefreshInterval,
     editMode,
+    groupByInbox,
     setLanguage,
     setAutoRefreshInterval,
     setTheme: setStoredTheme,
     setEditMode,
+    setGroupByInbox,
   } = useSettingsStore();
 
   const handleThemeChange = (newTheme: 'light' | 'dark' | 'system') => {
@@ -180,6 +182,30 @@ export default function Settings() {
                     </Button>
                   ))}
                 </div>
+              </div>
+
+              {/* Group By Inbox */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">{t('groupByInbox')}</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  <Button
+                    variant={groupByInbox ? 'default' : 'outline'}
+                    onClick={() => setGroupByInbox(true)}
+                    className="rounded-xl"
+                  >
+                    {t('enabled')}
+                  </Button>
+                  <Button
+                    variant={!groupByInbox ? 'default' : 'outline'}
+                    onClick={() => setGroupByInbox(false)}
+                    className="rounded-xl"
+                  >
+                    {t('disabled')}
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {t('groupByInboxDesc')}
+                </p>
               </div>
 
 

@@ -209,6 +209,29 @@ const emailDB = {
 
     return recipients.map(r => r.toAddress).filter(Boolean) as string[];
   },
+
+  async getRecipientsWithCount(): Promise<{ address: string; total: number; unread: number }[]> {
+    const db = getDb();
+
+    const rows = await db
+      .select({
+        address: email.toAddress,
+        total: sql<number>`count(*)`,
+        unread: sql<number>`sum(case when ${email.readStatus} = 0 then 1 else 0 end)`,
+      })
+      .from(email)
+      .where(sql`${email.toAddress} IS NOT NULL`)
+      .groupBy(email.toAddress)
+      .orderBy(desc(sql`count(*)`));
+
+    return rows
+      .filter((r) => r.address !== null)
+      .map((r) => ({
+        address: r.address as string,
+        total: r.total,
+        unread: r.unread ?? 0,
+      }));
+  },
 };
 
 export default emailDB;

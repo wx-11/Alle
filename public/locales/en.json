@@ -71,5 +71,8 @@
   "emailTypeSubscriptionLink": "Subscription Link",
   "emailTypeInternalLink": "Internal Link",
   "emailTypeOtherLink": "Other Link",
-  "emailTypeNone": "None"
+  "emailTypeNone": "None",
+  "groupByInbox": "Group by Inbox",
+  "groupByInboxDesc": "When enabled, emails are grouped by inbox address. Click an inbox to view its emails.",
+  "inboxes": "Inboxes"
 }

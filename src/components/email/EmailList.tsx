@@ -3,7 +3,8 @@
 import { useCallback, useState, useTransition, useEffect, type MouseEvent } from "react";
 import { useDevice } from "@/provider/Device";
 import useEmailStore from "@/lib/store/email";
-import { useDeleteEmail, useBatchDeleteEmails, useEmailListInfinite } from "@/lib/hooks/useEmailApi";
+import { useSettingsStore } from "@/lib/store/settings";
+import { useDeleteEmail, useBatchDeleteEmails, useEmailListInfinite, useInboxes } from "@/lib/hooks/useEmailApi";
 import type { Email } from "@/types";
 import EmailListHeader from "@/components/email/EmailListHeader";
 import EmailListContent from "@/components/email/EmailListContent";
@@ -12,6 +13,7 @@ import MobileEmailDrawer from "@/components/email/MobileEmailDrawer";
 import MobileSettingsDrawer from "@/components/email/MobileSettingsDrawer";
 import EmailDetail from "@/components/email/EmailDetail";
 import Settings from "@/components/Settings";
+import InboxList, { InboxBackHeader } from "@/components/email/InboxList";
 
 export default function EmailList() {
   const { isMobile } = useDevice();
@@ -21,7 +23,15 @@ export default function EmailList() {
   const [mobileSettingsOpen, setMobileSettingsOpen] = useState(false);
   const [, startTransition] = useTransition();
 
-  // 数据获取逻辑
+  const { groupByInbox } = useSettingsStore();
+  const selectedInbox = useEmailStore((state) => state.selectedInbox);
+  const setSelectedInbox = useEmailStore((state) => state.setSelectedInbox);
+
+  // 收件箱列表数据（分组模式）
+  const { data: inboxesData, isLoading: inboxesLoading, isFetching: inboxesFetching, refetch: refetchInboxes } = useInboxes();
+  const inboxes = inboxesData ?? [];
+
+  // 邮件列表数据
   const { data, isLoading, isFetching, refetch, fetchNextPage, hasNextPage } = useEmailListInfinite();
   const emails = useEmailStore((state) => state.emails);
   const selectedEmailId = useEmailStore((state) => state.selectedEmailId);
@@ -42,8 +52,18 @@ export default function EmailList() {
     }
   }, [data]);
 
+  // 切换分组模式时，重置选中的收件箱
+  useEffect(() => {
+    if (!groupByInbox) {
+      setSelectedInbox(null);
+    }
+  }, [groupByInbox, setSelectedInbox]);
+
   const loading = isLoading || isFetching;
   const selectedEmail = emails.find((e) => e.id === selectedEmailId) || null;
+
+  // 是否显示收件箱列表（分组模式 && 未选择具体收件箱）
+  const showInboxList = groupByInbox && !selectedInbox;
 
   const handleEmailClick = useCallback(
     (email: Email) => {
@@ -114,44 +134,74 @@ export default function EmailList() {
     }
   }, [hasNextPage, isFetching, fetchNextPage]);
 
+  const handleSelectInbox = useCallback((address: string) => {
+    setSelectedInbox(address);
+    setSelectedEmails(new Set());
+  }, [setSelectedInbox]);
+
+  const handleBackToInboxes = useCallback(() => {
+    setSelectedInbox(null);
+    setSelectedEmails(new Set());
+    selectEmail(null);
+  }, [setSelectedInbox, selectEmail]);
+
+  const handleRefresh = useCallback(() => {
+    if (showInboxList) {
+      void refetchInboxes();
+    } else {
+      void refetch();
+    }
+  }, [showInboxList, refetchInboxes, refetch]);
+
   return (
     <div className="min-h-screen bg-background">
       <div className="flex h-screen overflow-hidden">
         <aside className="w-full md:w-[380px] lg:w-[420px] flex-shrink-0 border-r border-border flex flex-col bg-card overflow-hidden">
           <EmailListHeader
             selectedEmails={selectedEmails}
-            loading={loading}
-            onRefresh={() => {
-              void refetch();
-            }}
+            loading={showInboxList ? (inboxesLoading || inboxesFetching) : loading}
+            onRefresh={handleRefresh}
             onToggleSelectAll={handleToggleSelectAll}
             onBatchDelete={handleBatchDelete}
             onClearSelection={() => setSelectedEmails(new Set())}
             onOpenSettings={handleOpenSettings}
           />
 
+          {/* 分组模式下选中收件箱时显示返回头 */}
+          {groupByInbox && selectedInbox && (
+            <InboxBackHeader selectedInbox={selectedInbox} onBack={handleBackToInboxes} />
+          )}
+
           <div className="flex-1 overflow-hidden">
-            <EmailListInteractionsProvider
-              value={{
-                copiedId,
-                onCopy: handleCopy,
-                onEmailClick: handleEmailClick,
-                onEmailDelete: handleEmailDelete,
-                onAvatarToggle: handleAvatarToggle,
-              }}
-            >
-              <EmailListContent
-                emails={emails}
-                loading={loading}
-                hasMore={hasNextPage}
-                onLoadMore={handleLoadMore}
-                onRefresh={() => {
-                  void refetch();
-                }}
-                selectedEmailId={selectedEmailId}
-                selectedEmails={selectedEmails}
+            {showInboxList ? (
+              // 分组模式：显示收件箱列表
+              <InboxList
+                inboxes={inboxes}
+                loading={inboxesLoading || inboxesFetching}
+                onSelectInbox={handleSelectInbox}
               />
-            </EmailListInteractionsProvider>
+            ) : (
+              // 普通模式或分组模式下选中了收件箱：显示邮件列表
+              <EmailListInteractionsProvider
+                value={{
+                  copiedId,
+                  onCopy: handleCopy,
+                  onEmailClick: handleEmailClick,
+                  onEmailDelete: handleEmailDelete,
+                  onAvatarToggle: handleAvatarToggle,
+                }}
+              >
+                <EmailListContent
+                  emails={emails}
+                  loading={loading}
+                  hasMore={hasNextPage}
+                  onLoadMore={handleLoadMore}
+                  onRefresh={handleRefresh}
+                  selectedEmailId={selectedEmailId}
+                  selectedEmails={selectedEmails}
+                />
+              </EmailListInteractionsProvider>
+            )}
           </div>
         </aside>
 

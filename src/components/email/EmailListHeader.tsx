@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import DeleteDialog from "@/components/common/DeleteDialog";
 import useTranslation from "@/lib/hooks/useTranslation";
 import useEmailStore from "@/lib/store/email";
+import { useSettingsStore } from "@/lib/store/settings";
 
 interface EmailListHeaderProps {
   selectedEmails: Set<number>;
@@ -29,10 +30,15 @@ export default function EmailListHeader({
   const { t } = useTranslation();
   const totalCount = useEmailStore((state) => state.total);
   const emailCount = useEmailStore((state) => state.emails.length);
+  const { groupByInbox } = useSettingsStore();
+  const selectedInbox = useEmailStore((state) => state.selectedInbox);
 
   const selectionCount = selectedEmails.size;
   const hasSelection = selectionCount > 0;
   const isAllSelected = hasSelection && selectionCount === emailCount;
+
+  // 分组模式下未选择收件箱时，显示"收件箱"标题
+  const showInboxListMode = groupByInbox && !selectedInbox;
 
   return (
     <motion.header
@@ -42,9 +48,15 @@ export default function EmailListHeader({
       className="flex items-center justify-between px-6 py-3 border-b"
     >
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{t("inbox")}</h1>
+        <h1 className="text-2xl font-bold text-foreground">
+          {showInboxListMode ? t("inboxes") : t("inbox")}
+        </h1>
         <p className="text-sm text-muted-foreground">
-          {hasSelection ? t("selectedCount", { count: selectionCount }) : t("emailsCount", { count: totalCount })}
+          {hasSelection
+            ? t("selectedCount", { count: selectionCount })
+            : showInboxListMode
+              ? t("inboxes")
+              : t("emailsCount", { count: totalCount })}
         </p>
       </div>
 

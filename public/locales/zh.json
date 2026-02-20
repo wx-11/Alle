@@ -71,5 +71,8 @@
   "emailTypeSubscriptionLink": "订阅链接",
   "emailTypeInternalLink": "内部链接",
   "emailTypeOtherLink": "其他链接",
-  "emailTypeNone": "无"
+  "emailTypeNone": "无",
+  "groupByInbox": "按收件箱分组",
+  "groupByInboxDesc": "启用后邮件将按收件箱地址分组显示，点击收件箱查看对应邮件",
+  "inboxes": "收件箱列表"
 }

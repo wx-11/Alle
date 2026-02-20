@@ -16,24 +16,32 @@ type EmailListInfiniteData = InfiniteData<EmailListPage, number>;
 
 
 export const useEmailListInfinite = () => {
-  const { autoRefreshInterval } = useSettingsStore();
+  const { autoRefreshInterval, groupByInbox } = useSettingsStore();
   const filters = useEmailStore((state) => state.filters);
+  const selectedInbox = useEmailStore((state) => state.selectedInbox);
 
   const normalizedEmailTypes = useMemo(() => {
     return [...filters.emailTypes].sort();
   }, [filters.emailTypes]);
 
   const normalizedRecipients = useMemo(() => {
+    // 分组模式下，如果选中了收件箱，强制使用该收件箱作为 recipient 过滤
+    if (groupByInbox && selectedInbox) {
+      return [selectedInbox];
+    }
     return [...filters.recipients].sort();
-  }, [filters.recipients]);
+  }, [filters.recipients, groupByInbox, selectedInbox]);
 
   const readStatusParam = filters.readStatus === 'read' ? 1 : filters.readStatus === 'unread' ? 0 : undefined;
 
+  // 分组模式下每页 20 条，普通模式 50 条
+  const pageSize = groupByInbox ? 20 : 50;
+
   return useInfiniteQuery({
-    queryKey: ['emails', { readStatus: filters.readStatus, emailTypes: normalizedEmailTypes, recipients: normalizedRecipients }],
+    queryKey: ['emails', { readStatus: filters.readStatus, emailTypes: normalizedEmailTypes, recipients: normalizedRecipients, pageSize }],
     queryFn: async ({ pageParam = 0 }) => {
       const result = await emailApi.fetchEmails({
-        limit: 50,
+        limit: pageSize,
         offset: pageParam,
         readStatus: readStatusParam,
         emailTypes: normalizedEmailTypes,
@@ -51,6 +59,8 @@ export const useEmailListInfinite = () => {
       return loadedCount < lastPage.total ? lastPage.nextOffset : undefined;
     },
     initialPageParam: 0,
+    // 分组模式下，未选择收件箱时不请求邮件列表
+    enabled: !(groupByInbox && !selectedInbox),
     refetchInterval: autoRefreshInterval > 0 ? autoRefreshInterval : false,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
@@ -67,6 +77,7 @@ export const useDeleteEmail = () => {
     onSuccess: (emailId) => {
       removeEmail(emailId);
       queryClient.invalidateQueries({ queryKey: ['emails'] });
+      queryClient.invalidateQueries({ queryKey: ['inboxes'] });
     },
   });
 };
@@ -80,6 +91,7 @@ export const useBatchDeleteEmails = () => {
     onSuccess: (emailIds) => {
       removeEmails(emailIds);
       queryClient.invalidateQueries({ queryKey: ['emails'] });
+      queryClient.invalidateQueries({ queryKey: ['inboxes'] });
     },
   });
 };
@@ -109,6 +121,9 @@ export const useMarkEmail = () => {
           })),
         };
       });
+
+      // 刷新收件箱列表以更新未读计数
+      queryClient.invalidateQueries({ queryKey: ['inboxes'] });
     },
   });
 };
@@ -118,6 +133,19 @@ export const useRecipients = () => {
     queryKey: ['recipients'],
     queryFn: emailApi.fetchRecipients,
     staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useInboxes = () => {
+  const { autoRefreshInterval } = useSettingsStore();
+
+  return useQuery({
+    queryKey: ['inboxes'],
+    queryFn: emailApi.fetchInboxes,
+    refetchInterval: autoRefreshInterval > 0 ? autoRefreshInterval : false,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    staleTime: 5000,
   });
 };
 

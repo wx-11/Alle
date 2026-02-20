@@ -47,3 +47,13 @@ export const DEFAULT_EXTRACT_RESULT: ExtractResult = {
   result: '',
   result_text: '',
 };
+
+// ====================
+// 收件箱分组类型
+// ====================
+
+export interface Inbox {
+  address: string;
+  total: number;
+  unread: number;
+}

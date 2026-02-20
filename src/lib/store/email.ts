@@ -37,6 +37,7 @@ interface EmailStoreState {
   lastSyncedAt: string | null;
   visibleEmailId: number | null;
   filters: EmailFilters;
+  selectedInbox: string | null;
   setEmails: (emails: Email[], total: number, hasMore: boolean) => void;
   appendEmails: (emails: Email[], total: number, hasMore: boolean) => void;
   selectEmail: (emailId: number | null) => void;
@@ -48,6 +49,7 @@ interface EmailStoreState {
   markEmail: (emailId: number, isRead: boolean) => void;
   updateFilters: (partial: Partial<EmailFilters>) => void;
   resetFilters: () => void;
+  setSelectedInbox: (inbox: string | null) => void;
 }
 
 const useEmailStore = create<EmailStoreState>((set, get) => ({
@@ -59,6 +61,7 @@ const useEmailStore = create<EmailStoreState>((set, get) => ({
   lastSyncedAt: null,
   visibleEmailId: null,
   filters: createDefaultFilters(),
+  selectedInbox: null,
   setEmails: (emails, total, hasMore) => {
     set({
       emails: dedupeEmails(emails),
@@ -116,6 +119,9 @@ const useEmailStore = create<EmailStoreState>((set, get) => ({
   },
   resetFilters: () => {
     set({ filters: createDefaultFilters() });
+  },
+  setSelectedInbox: (inbox) => {
+    set({ selectedInbox: inbox, selectedEmailId: null });
   },
 }));
 
