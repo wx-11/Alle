@@ -77,6 +77,16 @@ All emails received by temporary email addresses are automatically integrated in
 
 ---
 
+### 🗂️ Batch Management
+
+Alle supports flexible batch operations for efficient email organization.
+
+- 📧 **Email batch selection**: Click the avatar or long-press an email item to enter multi-select mode, with support for select all and batch delete.
+- 📬 **Inbox batch selection**: In grouped mode, click the inbox icon or long-press an inbox item to enter multi-select, and delete all emails in selected inboxes with one click.
+- 📱 **Unified cross-platform interaction**: Long-press selection works on both desktop and mobile, providing a consistent experience.
+
+---
+
 ## 🛠️ Technical Highlights
 
 - 🌩️ **Built on Cloudflare Workers**:

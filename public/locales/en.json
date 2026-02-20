@@ -89,6 +89,7 @@
   "revokeAllTokensTitle": "Revoke All Sessions",
   "revokeAllTokensConfirm": "Are you sure you want to revoke all sessions? This will invalidate all issued tokens and require all devices to log in again.",
   "revokeAllTokensSuccess": "All sessions revoked",
+  "inboxesCount": "{{count}} mailboxes",
   "selectedInboxCount": "{{count}} inboxes selected",
   "batchDeleteInboxConfirm": "Confirm Delete Inbox Emails",
   "batchDeleteInboxDesc": "Are you sure you want to delete all emails in the selected <strong>{{count}}</strong> inboxes? This action cannot be undone."

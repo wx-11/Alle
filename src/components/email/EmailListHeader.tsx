@@ -82,7 +82,7 @@ export default function EmailListHeader({
           {showInboxListMode
             ? hasInboxSelection
               ? t("selectedInboxCount", { count: inboxSelectionCount })
-              : t("inboxes")
+              : t("inboxesCount", { count: inboxCount })
             : hasSelection
               ? t("selectedCount", { count: selectionCount })
               : t("emailsCount", { count: totalCount })}
