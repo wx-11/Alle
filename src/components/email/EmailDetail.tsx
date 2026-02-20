@@ -70,13 +70,32 @@ export default function EmailDetail({ email }: { email: Email | null }) {
 
   const handleCopyFullText = useCallback(() => {
     if (!email) return;
-    const text = email.bodyText || email.bodyHtml || '';
+
+    let text: string;
+    if (showRawSource) {
+      // 源信息视图：复制结构化原始信息
+      const fields = [
+        `Message-ID: ${email.messageId || ''}`,
+        `From: ${email.fromName ? `${email.fromName} <${email.fromAddress}>` : email.fromAddress || ''}`,
+        `To: ${email.toAddress || ''}`,
+        `Subject: ${email.title || ''}`,
+        `Sent-At: ${email.sentAt || ''}`,
+        `Received-At: ${email.receivedAt || ''}`,
+        `Email-Type: ${email.emailType || ''}`,
+        `Email-Result: ${email.emailResult || ''}`,
+        '',
+        email.bodyText || '',
+      ];
+      text = fields.join('\n');
+    } else {
+      text = email.bodyText || email.bodyHtml || '';
+    }
     if (!text) return;
 
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }, [email]);
+  }, [email, showRawSource]);
 
   const handleToggleRawSource = useCallback(() => {
     setShowRawSource((prev) => !prev);

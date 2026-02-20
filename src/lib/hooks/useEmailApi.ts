@@ -16,7 +16,7 @@ type EmailListInfiniteData = InfiniteData<EmailListPage, number>;
 
 
 export const useEmailListInfinite = () => {
-  const { autoRefreshInterval, groupByInbox } = useSettingsStore();
+  const { groupByInbox } = useSettingsStore();
   const filters = useEmailStore((state) => state.filters);
   const selectedInbox = useEmailStore((state) => state.selectedInbox);
 
@@ -61,7 +61,6 @@ export const useEmailListInfinite = () => {
     initialPageParam: 0,
     // 分组模式下，未选择收件箱时不请求邮件列表
     enabled: !(groupByInbox && !selectedInbox),
-    refetchInterval: autoRefreshInterval > 0 ? autoRefreshInterval : false,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     staleTime: 5000,
@@ -137,12 +136,9 @@ export const useRecipients = () => {
 };
 
 export const useInboxes = () => {
-  const { autoRefreshInterval } = useSettingsStore();
-
   return useQuery({
     queryKey: ['inboxes'],
     queryFn: emailApi.fetchInboxes,
-    refetchInterval: autoRefreshInterval > 0 ? autoRefreshInterval : false,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     staleTime: 5000,

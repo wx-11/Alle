@@ -20,11 +20,9 @@ export default function Settings() {
   const {
     theme: storedTheme,
     language: storedLanguage,
-    autoRefreshInterval,
     editMode,
     groupByInbox,
     setLanguage,
-    setAutoRefreshInterval,
     setTheme: setStoredTheme,
     setEditMode,
     setGroupByInbox,
@@ -34,14 +32,6 @@ export default function Settings() {
     setTheme(newTheme);
     setStoredTheme(newTheme);
   };
-
-  const intervalOptions = [
-    { label: t('never'), value: 0 },
-    { label: `10 ${t('seconds')}`, value: 10000 },
-    { label: `30 ${t('seconds')}`, value: 30000 },
-    { label: `1 ${t('minutes')}`, value: 60000 },
-    { label: `5 ${t('minutes')}`, value: 300000 },
-  ];
 
   const handleClearCache = async () => {
     if ('caches' in window) {
@@ -167,22 +157,6 @@ export default function Settings() {
                 <p className="text-xs text-muted-foreground">
                   {t('editModeDesc')}
                 </p>
-              </div>
-              {/* Auto Refresh Interval */}
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">{t('autoRefreshInterval')}</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  {intervalOptions.map((option) => (
-                    <Button
-                      key={option.value}
-                      variant={autoRefreshInterval === option.value ? 'default' : 'outline'}
-                      onClick={() => setAutoRefreshInterval(option.value)}
-                      className="rounded-xl"
-                    >
-                      {option.label}
-                    </Button>
-                  ))}
-                </div>
               </div>
 
               {/* Group By Inbox */}
