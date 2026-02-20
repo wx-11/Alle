@@ -51,16 +51,17 @@ export default function EmailDetail({ email }: { email: Email | null }) {
       return;
     }
 
-    // 始终翻译纯文本，避免 HTML 导致 AI 截断或输出损坏
     const content = email.bodyText || email.bodyHtml || '';
     if (!content) return;
 
-    translateMutation.mutate(content, {
-      onSuccess: (translated) => {
-        // 翻译结果始终作为纯文本存储和展示
+    // 同时发送纯文本和 HTML，服务端分别翻译
+    const contentHtml = email.bodyHtml || undefined;
+
+    translateMutation.mutate({ content, contentHtml }, {
+      onSuccess: (result) => {
         setTranslatedCache((prev) => ({
           ...prev,
-          [email.id]: { text: translated },
+          [email.id]: { text: result.text, html: result.html ?? undefined },
         }));
         setShowTranslated(true);
       },
@@ -141,8 +142,9 @@ export default function EmailDetail({ email }: { email: Email | null }) {
   const isTranslating = translateMutation.isPending;
   const hasContent = !!(email.bodyHtml || email.bodyText);
 
-  // 翻译模式：显示纯文本翻译结果；正常模式：显示原始 HTML/文本
-  const isTranslatedView = showTranslated && cached?.text;
+  // 翻译模式：优先使用 HTML 翻译结果保留格式，fallback 到纯文本
+  const isTranslatedView = showTranslated && cached;
+  const hasTranslatedHtml = isTranslatedView && !!cached?.html;
 
   return (
     <motion.div
@@ -391,10 +393,18 @@ export default function EmailDetail({ email }: { email: Email | null }) {
                 )}
               </div>
             ) : isTranslatedView ? (
-              // 翻译模式：纯文本展示，避免 HTML 渲染问题
-              <p className="text-[15px] text-foreground whitespace-pre-wrap leading-7 max-w-[65ch]">
-                {cached.text}
-              </p>
+              hasTranslatedHtml ? (
+                // 翻译模式 + HTML 翻译可用：保留原始格式渲染
+                <EmailContent
+                  bodyHtml={cached.html ?? null}
+                  bodyText={cached.text ?? null}
+                />
+              ) : (
+                // 翻译模式 + 仅纯文本：纯文本展示
+                <p className="text-[15px] text-foreground whitespace-pre-wrap leading-7 max-w-[65ch]">
+                  {cached?.text}
+                </p>
+              )
             ) : (
               <EmailContent
                 bodyHtml={email.bodyHtml}
