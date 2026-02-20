@@ -82,7 +82,7 @@
   "noSubject": "（无主题）",
   "selectEmail": "选择一封邮件",
   "selectEmailDesc": "从左侧列表中选择一封邮件以查看详细内容",
-  "copyFullText": "复制",
-  "viewRawSource": "原文",
+  "copyFullText": "复制全文",
+  "viewRawSource": "源信息",
   "hideRawSource": "返回"
 }
