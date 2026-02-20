@@ -84,18 +84,6 @@ function cleanHtmlResponse(html: string): string {
   return cleaned.trim();
 }
 
-/** 清理 AI 返回内容中的 <think>...</think> 思维链标签（含未闭合情况） */
-function stripThinkingTags(text: string): string {
-  // 清理完整的 <think>...</think> 块
-  let cleaned = text.replace(/<think>[\s\S]*?<\/think>\s*/g, '');
-  // 处理未闭合的 <think>（模型截断时可能缺少 </think>）
-  const openIdx = cleaned.indexOf('<think>');
-  if (openIdx !== -1) {
-    cleaned = cleaned.substring(0, openIdx);
-  }
-  return cleaned.trim();
-}
-
 async function callOpenAI(
   content: string,
   prompt: string,
@@ -145,13 +133,10 @@ async function callCloudflareAI(
 }
 
 async function translate(content: string, prompt: string, env: CloudflareEnv): Promise<string> {
-  let result: string;
   if (env.OPENAI_BASE_URL && env.OPENAI_API_KEY) {
-    result = await callOpenAI(content, prompt, env);
-  } else {
-    result = await callCloudflareAI(content, prompt, env);
+    return callOpenAI(content, prompt, env);
   }
-  return stripThinkingTags(result);
+  return callCloudflareAI(content, prompt, env);
 }
 
 async function translateHandler(req: NextApiRequest, res: NextApiResponse) {
