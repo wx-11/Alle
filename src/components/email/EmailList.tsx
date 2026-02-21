@@ -31,11 +31,6 @@ export default function EmailList() {
   const filters = useEmailStore((state) => state.filters);
   const updateFilters = useEmailStore((state) => state.updateFilters);
 
-  // 搜索处理
-  const handleSearch = useCallback((keyword: string, isRegex: boolean) => {
-    updateFilters({ search: keyword, searchRegex: isRegex });
-  }, [updateFilters]);
-
   // 收件箱列表数据（分组模式），传入搜索参数联动过滤
   const searchParams = filters.search ? { search: filters.search, searchRegex: filters.searchRegex } : undefined;
   const { data: inboxesData, isLoading: inboxesLoading, isFetching: inboxesFetching, refetch: refetchInboxes } = useInboxes(searchParams);
@@ -43,6 +38,17 @@ export default function EmailList() {
 
   // 邮件列表数据
   const { data, isLoading, isFetching, refetch, fetchNextPage, hasNextPage } = useEmailListInfinite();
+
+  // 搜索处理
+  const handleSearch = useCallback((keyword: string, isRegex: boolean) => {
+    const unchanged = keyword === filters.search && isRegex === filters.searchRegex;
+    updateFilters({ search: keyword, searchRegex: isRegex });
+    // 搜索词未变时强制刷新
+    if (unchanged) {
+      void refetch();
+      void refetchInboxes();
+    }
+  }, [filters.search, filters.searchRegex, updateFilters, refetch, refetchInboxes]);
   const emails = useEmailStore((state) => state.emails);
   const selectedEmailId = useEmailStore((state) => state.selectedEmailId);
   const selectEmail = useEmailStore((state) => state.selectEmail);
