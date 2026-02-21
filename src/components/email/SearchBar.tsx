@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import useTranslation from "@/lib/hooks/useTranslation";
@@ -86,10 +85,7 @@ export default function SearchBar({ onSearch, initialSearch = "", initialRegex =
   const hasInput = inputValue.length > 0;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, height: 0 }}
-      animate={{ opacity: 1, height: "auto" }}
-      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+    <div
       className="px-4 py-2 border-b border-border bg-card/50"
       style={{ touchAction: "manipulation" }}
     >
@@ -97,9 +93,11 @@ export default function SearchBar({ onSearch, initialSearch = "", initialRegex =
         {/* 正则 toggle */}
         <button
           type="button"
-          onPointerDown={(e) => { e.stopPropagation(); handleToggleRegex(); }}
+          onClick={handleToggleRegex}
           className={`min-w-[36px] min-h-[36px] flex items-center justify-center text-xs font-mono flex-shrink-0 rounded-md transition-colors cursor-pointer select-none ${
-            isRegex ? "text-primary" : "text-muted-foreground"
+            isRegex
+              ? "text-primary bg-accent"
+              : "text-muted-foreground"
           }`}
           title={t("regexMode")}
         >
@@ -121,7 +119,7 @@ export default function SearchBar({ onSearch, initialSearch = "", initialRegex =
           {hasInput && (
             <button
               type="button"
-              onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); handleClear(); }}
+              onClick={handleClear}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
             >
               <X className="h-3.5 w-3.5" />
@@ -132,7 +130,7 @@ export default function SearchBar({ onSearch, initialSearch = "", initialRegex =
         {/* 搜索按钮 */}
         <button
           type="button"
-          onPointerDown={(e) => { e.stopPropagation(); if (!regexError) handleSubmit(); }}
+          onClick={handleSubmit}
           disabled={regexError}
           className="min-w-[36px] min-h-[36px] flex items-center justify-center flex-shrink-0 rounded-md bg-primary text-primary-foreground hover:bg-primary-hover transition-all cursor-pointer select-none disabled:opacity-50 disabled:pointer-events-none"
         >
@@ -144,6 +142,6 @@ export default function SearchBar({ onSearch, initialSearch = "", initialRegex =
       {regexError && (
         <p className="text-xs text-destructive mt-1 pl-1">{t("invalidRegex")}</p>
       )}
-    </motion.div>
+    </div>
   );
 }
