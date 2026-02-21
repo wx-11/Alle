@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mail, Languages, Loader2, ArrowLeftRight, Copy, Check, Code } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -395,25 +395,9 @@ export default function EmailDetail({ email }: { email: Email | null }) {
                 <RawField label="Email-Result-Text" value={email.emailResultText} />
                 {email.emailError && <RawField label="Email-Error" value={email.emailError} />}
                 <Separator />
-                <div>
-                  <div className="relative">
-                    <span className="text-xs font-mono text-muted-foreground block mb-2">Body-Text</span>
-                    <RawCopyButton text={email.bodyText || ""} />
-                    <pre className="text-xs font-mono text-foreground bg-muted/50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto">
-                      {email.bodyText || "(empty)"}
-                    </pre>
-                  </div>
-                </div>
+                <RawBlock label="Body-Text" text={email.bodyText || ""} maxHeight="max-h-[300px]" />
                 {email.bodyHtml && (
-                  <div>
-                    <div className="relative">
-                      <span className="text-xs font-mono text-muted-foreground block mb-2">Body-HTML</span>
-                      <RawCopyButton text={email.bodyHtml} />
-                      <pre className="text-xs font-mono text-foreground bg-muted/50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all max-h-[400px] overflow-y-auto">
-                        {email.bodyHtml}
-                      </pre>
-                    </div>
-                  </div>
+                  <RawBlock label="Body-HTML" text={email.bodyHtml} maxHeight="max-h-[400px]" />
                 )}
               </div>
             ) : isTranslatedView ? (
@@ -453,9 +437,21 @@ function RawField({ label, value }: { label: string; value: string | null | unde
   );
 }
 
-/** Body-Text / Body-HTML 块右上角复制按钮 */
-function RawCopyButton({ text }: { text: string }) {
+/** Body-Text / Body-HTML 块：自动检测滚动条，智能调整复制按钮位置 */
+function RawBlock({ label, text, maxHeight }: { label: string; text: string; maxHeight: string }) {
+  const preRef = useRef<HTMLPreElement>(null);
+  const [hasScrollbar, setHasScrollbar] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const el = preRef.current;
+    if (!el) return;
+    const check = () => setHasScrollbar(el.scrollHeight > el.clientHeight);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [text]);
 
   const handleCopy = useCallback(() => {
     if (!text) return;
@@ -465,12 +461,27 @@ function RawCopyButton({ text }: { text: string }) {
   }, [text]);
 
   return (
-    <button
-      type="button"
-      onClick={handleCopy}
-      className="absolute right-2 top-6 p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
-    >
-      {copied ? <Check className="h-3.5 w-3.5 text-chart-2" /> : <Copy className="h-3.5 w-3.5" />}
-    </button>
+    <div className="relative">
+      <span className="text-xs font-mono text-muted-foreground block mb-2">{label}</span>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className={cn(
+          "absolute top-6 p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-all",
+          hasScrollbar ? "right-4" : "right-2"
+        )}
+      >
+        {copied ? <Check className="h-3.5 w-3.5 text-chart-2" /> : <Copy className="h-3.5 w-3.5" />}
+      </button>
+      <pre
+        ref={preRef}
+        className={cn(
+          "text-xs font-mono text-foreground bg-muted/50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all overflow-y-auto",
+          maxHeight
+        )}
+      >
+        {text || "(empty)"}
+      </pre>
+    </div>
   );
 }
