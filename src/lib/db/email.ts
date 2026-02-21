@@ -54,8 +54,9 @@ const emailDB = {
       }
     }
 
-    if (search) {
-      const kw = `%${search}%`;
+    const searches = Array.isArray(search) ? search : search ? [search] : [];
+    for (const s of searches) {
+      const kw = `%${s}%`;
       conditions.push(
         sql`(${email.title} LIKE ${kw} OR ${email.bodyText} LIKE ${kw} OR ${email.fromName} LIKE ${kw} OR ${email.fromAddress} LIKE ${kw} OR ${email.toAddress} LIKE ${kw})`
       );
@@ -108,8 +109,9 @@ const emailDB = {
       }
     }
 
-    if (search) {
-      const kw = `%${search}%`;
+    const searches = Array.isArray(search) ? search : search ? [search] : [];
+    for (const s of searches) {
+      const kw = `%${s}%`;
       conditions.push(
         sql`(${email.title} LIKE ${kw} OR ${email.bodyText} LIKE ${kw} OR ${email.fromName} LIKE ${kw} OR ${email.fromAddress} LIKE ${kw} OR ${email.toAddress} LIKE ${kw})`
       );
@@ -229,13 +231,14 @@ const emailDB = {
     return recipients.map(r => r.toAddress).filter(Boolean) as string[];
   },
 
-  async getRecipientsWithCount(search?: string): Promise<{ address: string; total: number; unread: number }[]> {
+  async getRecipientsWithCount(search?: string | string[]): Promise<{ address: string; total: number; unread: number }[]> {
     const db = getDb();
 
     const conditions = [sql`${email.toAddress} IS NOT NULL`];
 
-    if (search) {
-      const kw = `%${search}%`;
+    const searches = Array.isArray(search) ? search : search ? [search] : [];
+    for (const s of searches) {
+      const kw = `%${s}%`;
       conditions.push(
         sql`(${email.title} LIKE ${kw} OR ${email.bodyText} LIKE ${kw} OR ${email.fromName} LIKE ${kw} OR ${email.fromAddress} LIKE ${kw} OR ${email.toAddress} LIKE ${kw})`
       );

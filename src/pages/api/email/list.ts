@@ -70,16 +70,20 @@ async function listHandler(req: NextApiRequest, res: NextApiResponse) {
     recipientValue = normalizedRecipients;
   }
 
-  const searchValue = typeof search === 'string' ? search.trim() : undefined;
+  // search 支持多值：?search=a&search=b
+  const rawSearch = search === undefined ? [] : Array.isArray(search) ? search : [search];
+  const searchValues = rawSearch.map(s => (typeof s === 'string' ? s.trim() : '')).filter(Boolean);
   const isRegex = search_regex === '1' || search_regex === 'true';
 
   // 正则模式下校验合法性
-  let searchRegExp: RegExp | null = null;
-  if (searchValue && isRegex) {
-    try {
-      searchRegExp = new RegExp(searchValue, 'i');
-    } catch {
-      return failure(res, 'Invalid regex pattern', 400);
+  const searchRegExps: RegExp[] = [];
+  if (isRegex && searchValues.length > 0) {
+    for (const sv of searchValues) {
+      try {
+        searchRegExps.push(new RegExp(sv, 'i'));
+      } catch {
+        return failure(res, 'Invalid regex pattern', 400);
+      }
     }
   }
 
@@ -90,17 +94,16 @@ async function listHandler(req: NextApiRequest, res: NextApiResponse) {
     emailType: email_type as string | undefined,
     recipient: recipientValue,
     // 普通模式：透传 search 给 DB；正则模式：不传（JS 过滤）
-    search: searchValue && !isRegex ? searchValue : undefined,
+    search: !isRegex && searchValues.length > 0 ? searchValues : undefined,
   };
 
   try {
-    if (searchRegExp) {
+    if (searchRegExps.length > 0) {
       // 正则模式：拉取全量数据（保留其他过滤条件），JS 过滤 + 手动分页
       const requestedLimit = params.limit!;
       const requestedOffset = params.offset!;
-      // 拉全量：不限制 limit/offset
       const allData = await emailDB.list({ ...params, limit: 10000, offset: 0 });
-      const filtered = allData.filter((e) => matchesRegex(e, searchRegExp!));
+      const filtered = allData.filter((e) => searchRegExps.every((re) => matchesRegex(e, re)));
       const total = filtered.length;
       const data = filtered.slice(requestedOffset, requestedOffset + requestedLimit);
       return success<Email[]>(res, data, 200, { total });

@@ -8,7 +8,7 @@ interface FetchEmailsParams {
     readStatus?: number;
     emailTypes?: ExtractResultType[];
     recipients?: string[];
-    search?: string;
+    search?: string | string[];
     searchRegex?: boolean;
 }
 
@@ -39,7 +39,10 @@ export async function fetchEmails({
     }
 
     if (search) {
-        searchParams.set('search', search);
+        const searches = Array.isArray(search) ? search : [search];
+        for (const s of searches) {
+            if (s) searchParams.append('search', s);
+        }
         if (searchRegex) {
             searchParams.set('search_regex', '1');
         }
@@ -175,7 +178,7 @@ export async function mark(id: number, isRead: boolean) {
 }
 
 export interface FetchInboxesParams {
-    search?: string;
+    search?: string | string[];
     searchRegex?: boolean;
 }
 
@@ -183,7 +186,10 @@ export async function fetchInboxes(params?: FetchInboxesParams) {
     const searchParams = new URLSearchParams();
 
     if (params?.search) {
-        searchParams.set('search', params.search);
+        const searches = Array.isArray(params.search) ? params.search : [params.search];
+        for (const s of searches) {
+            if (s) searchParams.append('search', s);
+        }
         if (params.searchRegex) {
             searchParams.set('search_regex', '1');
         }

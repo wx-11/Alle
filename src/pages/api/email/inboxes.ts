@@ -22,24 +22,27 @@ async function inboxesHandler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const { search, search_regex } = req.query;
-  const searchValue = typeof search === 'string' ? search.trim() : undefined;
+  const rawSearch = search === undefined ? [] : Array.isArray(search) ? search : [search];
+  const searchValues = rawSearch.map(s => (typeof s === 'string' ? s.trim() : '')).filter(Boolean);
   const isRegex = search_regex === '1' || search_regex === 'true';
 
   // 正则模式下校验合法性
-  let searchRegExp: RegExp | null = null;
-  if (searchValue && isRegex) {
-    try {
-      searchRegExp = new RegExp(searchValue, 'i');
-    } catch {
-      return failure(res, 'Invalid regex pattern', 400);
+  const searchRegExps: RegExp[] = [];
+  if (isRegex && searchValues.length > 0) {
+    for (const sv of searchValues) {
+      try {
+        searchRegExps.push(new RegExp(sv, 'i'));
+      } catch {
+        return failure(res, 'Invalid regex pattern', 400);
+      }
     }
   }
 
   try {
-    if (searchRegExp) {
+    if (searchRegExps.length > 0) {
       // 正则模式：拉全量邮件，JS 过滤后按收件箱重新聚合
       const allEmails = await emailDB.list({ limit: 10000, offset: 0 });
-      const filtered = allEmails.filter((e) => matchesRegex(e, searchRegExp!));
+      const filtered = allEmails.filter((e) => searchRegExps.every((re) => matchesRegex(e, re)));
 
       const inboxMap = new Map<string, { total: number; unread: number }>();
       for (const e of filtered) {
@@ -59,7 +62,7 @@ async function inboxesHandler(req: NextApiRequest, res: NextApiResponse) {
 
     // 普通模式：透传 search 给 DB
     const inboxes = await emailDB.getRecipientsWithCount(
-      searchValue || undefined
+      searchValues.length > 0 ? searchValues : undefined
     );
     return success<Inbox[]>(res, inboxes);
   } catch (e) {

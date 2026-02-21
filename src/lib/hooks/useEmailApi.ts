@@ -34,16 +34,21 @@ export const useEmailListInfinite = () => {
 
   const readStatusParam = filters.readStatus === 'read' ? 1 : filters.readStatus === 'unread' ? 0 : undefined;
 
-  // 子文件夹内用 inboxSearch，外层用 search
+  // 子文件夹内：全局搜索 + 收件箱搜索叠加；外层仅全局搜索
   const isInInbox = !!(groupByInbox && selectedInbox);
-  const searchValue = isInInbox ? (filters.inboxSearch || '') : (filters.search || '');
-  const searchRegex = isInInbox ? filters.inboxSearchRegex : filters.searchRegex;
+  const searchTerms: string[] = [];
+  if (filters.search) searchTerms.push(filters.search);
+  if (isInInbox && filters.inboxSearch) searchTerms.push(filters.inboxSearch);
+  // 正则模式：任一开启即为正则
+  const searchRegex = isInInbox
+    ? (filters.searchRegex || filters.inboxSearchRegex)
+    : filters.searchRegex;
 
   // 分组模式下每页 20 条，普通模式 50 条
   const pageSize = groupByInbox ? 20 : 50;
 
   return useInfiniteQuery({
-    queryKey: ['emails', { readStatus: filters.readStatus, emailTypes: normalizedEmailTypes, recipients: normalizedRecipients, pageSize, search: searchValue, searchRegex }],
+    queryKey: ['emails', { readStatus: filters.readStatus, emailTypes: normalizedEmailTypes, recipients: normalizedRecipients, pageSize, search: searchTerms, searchRegex }],
     queryFn: async ({ pageParam = 0 }) => {
       const result = await emailApi.fetchEmails({
         limit: pageSize,
@@ -51,7 +56,7 @@ export const useEmailListInfinite = () => {
         readStatus: readStatusParam,
         emailTypes: normalizedEmailTypes,
         recipients: normalizedRecipients,
-        search: searchValue || undefined,
+        search: searchTerms.length > 0 ? searchTerms : undefined,
         searchRegex,
       });
 
