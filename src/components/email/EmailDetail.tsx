@@ -396,17 +396,23 @@ export default function EmailDetail({ email }: { email: Email | null }) {
                 {email.emailError && <RawField label="Email-Error" value={email.emailError} />}
                 <Separator />
                 <div>
-                  <span className="text-xs font-mono text-muted-foreground block mb-2">Body-Text</span>
-                  <pre className="text-xs font-mono text-foreground bg-muted/50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto">
-                    {email.bodyText || "(empty)"}
-                  </pre>
+                  <div className="relative">
+                    <span className="text-xs font-mono text-muted-foreground block mb-2">Body-Text</span>
+                    <RawCopyButton text={email.bodyText || ""} />
+                    <pre className="text-xs font-mono text-foreground bg-muted/50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all max-h-[300px] overflow-y-auto">
+                      {email.bodyText || "(empty)"}
+                    </pre>
+                  </div>
                 </div>
                 {email.bodyHtml && (
                   <div>
-                    <span className="text-xs font-mono text-muted-foreground block mb-2">Body-HTML</span>
-                    <pre className="text-xs font-mono text-foreground bg-muted/50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all max-h-[400px] overflow-y-auto">
-                      {email.bodyHtml}
-                    </pre>
+                    <div className="relative">
+                      <span className="text-xs font-mono text-muted-foreground block mb-2">Body-HTML</span>
+                      <RawCopyButton text={email.bodyHtml} />
+                      <pre className="text-xs font-mono text-foreground bg-muted/50 rounded-lg p-4 overflow-x-auto whitespace-pre-wrap break-all max-h-[400px] overflow-y-auto">
+                        {email.bodyHtml}
+                      </pre>
+                    </div>
                   </div>
                 )}
               </div>
@@ -444,5 +450,27 @@ function RawField({ label, value }: { label: string; value: string | null | unde
       <span className="text-xs font-mono text-muted-foreground flex-shrink-0 w-32 text-right">{label}</span>
       <span className="text-xs font-mono text-foreground break-all">{value}</span>
     </div>
+  );
+}
+
+/** Body-Text / Body-HTML 块右上角复制按钮 */
+function RawCopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(() => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }, [text]);
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="absolute right-2 top-6 p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-all"
+    >
+      {copied ? <Check className="h-3.5 w-3.5 text-chart-2" /> : <Copy className="h-3.5 w-3.5" />}
+    </button>
   );
 }
