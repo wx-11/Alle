@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { RefreshCw, Settings as SettingsIcon, CheckSquare, Square, Trash2 } from "lucide-react";
+import { RefreshCw, Settings as SettingsIcon, CheckSquare, Square, Trash2, MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DeleteDialog from "@/components/common/DeleteDialog";
 import useTranslation from "@/lib/hooks/useTranslation";
@@ -16,6 +16,7 @@ interface EmailListHeaderProps {
   onBatchDelete: () => Promise<void> | void;
   onClearSelection: () => void;
   onOpenSettings: () => void;
+  onMarkAllRead: () => void;
   // 收件箱批量选择
   selectedInboxes?: Set<string>;
   inboxCount?: number;
@@ -34,6 +35,7 @@ export default function EmailListHeader({
   onBatchDelete,
   onClearSelection,
   onOpenSettings,
+  onMarkAllRead,
   selectedInboxes,
   inboxCount = 0,
   onToggleSelectAllInboxes,
@@ -239,6 +241,9 @@ export default function EmailListHeader({
             transition={{ duration: 0.25, ease: [0.33, 1, 0.68, 1] }}
             className="flex items-center gap-2"
           >
+            <Button variant="ghost" size="icon" onClick={onMarkAllRead} title={t("markAllRead")}>
+              <MailCheck />
+            </Button>
             <Button variant="ghost" size="icon" onClick={onOpenSettings}>
               <motion.div
                 layout

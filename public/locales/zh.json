@@ -96,5 +96,6 @@
   "searchPlaceholder": "搜索邮件...",
   "regexMode": "正则",
   "invalidRegex": "无效的正则表达式",
-  "copyEmail": "复制邮箱"
+  "copyEmail": "复制邮箱",
+  "markAllRead": "全部已读"
 }

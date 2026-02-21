@@ -4,7 +4,8 @@ import { useCallback, useState, useTransition, useEffect, type MouseEvent } from
 import { useDevice } from "@/provider/Device";
 import useEmailStore from "@/lib/store/email";
 import { useSettingsStore } from "@/lib/store/settings";
-import { useDeleteEmail, useBatchDeleteEmails, useBatchDeleteByInbox, useEmailListInfinite, useInboxes } from "@/lib/hooks/useEmailApi";
+import { useDeleteEmail, useBatchDeleteEmails, useBatchDeleteByInbox, useEmailListInfinite, useInboxes, useMarkAllAsRead } from "@/lib/hooks/useEmailApi";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Email } from "@/types";
 import EmailListHeader from "@/components/email/EmailListHeader";
 import EmailListContent from "@/components/email/EmailListContent";
@@ -66,6 +67,8 @@ export default function EmailList() {
   const deleteEmailMutation = useDeleteEmail();
   const batchDeleteMutation = useBatchDeleteEmails();
   const batchDeleteByInboxMutation = useBatchDeleteByInbox();
+  const markAllAsReadMutation = useMarkAllAsRead();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (data) {
@@ -205,12 +208,18 @@ export default function EmailList() {
   }, [setSelectedInbox, selectEmail]);
 
   const handleRefresh = useCallback(() => {
-    if (showInboxList) {
-      void refetchInboxes();
-    } else {
-      void refetch();
-    }
-  }, [showInboxList, refetchInboxes, refetch]);
+    // 强制清除缓存后重新拉取，确保时间、已读状态等都更新
+    queryClient.removeQueries({ queryKey: ['emails'] });
+    queryClient.removeQueries({ queryKey: ['inboxes'] });
+    void refetch();
+    void refetchInboxes();
+  }, [queryClient, refetch, refetchInboxes]);
+
+  const handleMarkAllRead = useCallback(() => {
+    // 子文件夹内：只标记当前收件箱；主页：标记全部
+    const recipient = isInInbox ? selectedInbox ?? undefined : undefined;
+    markAllAsReadMutation.mutate(recipient);
+  }, [isInInbox, selectedInbox, markAllAsReadMutation]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -224,6 +233,7 @@ export default function EmailList() {
             onBatchDelete={handleBatchDelete}
             onClearSelection={() => setSelectedEmails(new Set())}
             onOpenSettings={handleOpenSettings}
+            onMarkAllRead={handleMarkAllRead}
             selectedInboxes={selectedInboxes}
             inboxCount={inboxes.length}
             onToggleSelectAllInboxes={handleToggleSelectAllInboxes}

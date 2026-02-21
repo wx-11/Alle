@@ -181,6 +181,19 @@ const emailDB = {
       .where(inArray(email.id, ids));
   },
 
+  async markAllAsRead(recipient?: string): Promise<number> {
+    const db = getDb();
+    const conditions = [sql`${email.readStatus} = 0`];
+    if (recipient) {
+      conditions.push(sql`${email.toAddress} = ${recipient}`);
+    }
+    const whereClause = conditions.reduce((acc, c) => sql`${acc} AND ${c}`);
+    const result = await db.update(email)
+      .set({ readStatus: 1 })
+      .where(whereClause);
+    return result.meta?.changes ?? 0;
+  },
+
 
   async deleteExpiredByType(env: CloudflareEnv, types: string[], expiredDate: string): Promise<number[]> {
     const db = getDbFromEnv(env);

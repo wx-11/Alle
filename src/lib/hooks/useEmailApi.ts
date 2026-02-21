@@ -119,6 +119,18 @@ export const useBatchDeleteByInbox = () => {
   });
 };
 
+export const useMarkAllAsRead = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (recipient?: string) => emailApi.markAllAsRead(recipient),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['emails'] });
+      queryClient.invalidateQueries({ queryKey: ['inboxes'] });
+    },
+  });
+};
+
 export const useMarkEmail = () => {
   const queryClient = useQueryClient();
   const { markEmail } = useEmailStore();

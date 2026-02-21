@@ -177,6 +177,29 @@ export async function mark(id: number, isRead: boolean) {
     return { emailId: id, isRead };
 }
 
+export async function markAllAsRead(recipient?: string) {
+    const searchParams = new URLSearchParams();
+    if (recipient) {
+        searchParams.set('recipient', recipient);
+    }
+    const qs = searchParams.toString();
+    const url = qs ? `/api/email/mark-all-read?${qs}` : '/api/email/mark-all-read';
+
+    const response = await apiFetch(url, { method: 'POST' });
+
+    if (!response.ok) {
+        throw new ApiError('Failed to mark all as read', response.status);
+    }
+
+    const data = (await response.json()) as ApiResponse<{ count: number }>;
+
+    if (!data.success) {
+        throw new ApiError(data.error || 'Failed to mark all as read', response.status);
+    }
+
+    return data.data?.count ?? 0;
+}
+
 export interface FetchInboxesParams {
     search?: string | string[];
     searchRegex?: boolean;

@@ -96,5 +96,6 @@
   "searchPlaceholder": "Search emails...",
   "regexMode": "Regex",
   "invalidRegex": "Invalid regex",
-  "copyEmail": "Copy email"
+  "copyEmail": "Copy email",
+  "markAllRead": "Mark all read"
 }

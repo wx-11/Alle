@@ -30,7 +30,7 @@ export default function EmailListItem({
   const formatTime = useFormatTime();
   const { onEmailClick, onAvatarToggle } = useEmailListInteractions();
 
-  const formattedTime = useMemo(() => formatTime(email.sentAt), [formatTime, email.sentAt]);
+  const formattedTime = formatTime(email.sentAt);
   const isRead = email.readStatus === 1;
   const isUnread = !isRead;
 
