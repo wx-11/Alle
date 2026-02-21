@@ -8,14 +8,13 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 const PARAGRAPH_SEPARATOR = '%%';
 
-function detectLanguage(text: string): 'zh' | 'other' {
-  const chineseChars = text.match(/[\u4e00-\u9fff\u3400-\u4dbf]/g);
-  const ratio = (chineseChars?.length ?? 0) / Math.max(text.length, 1);
-  return ratio > 0.3 ? 'zh' : 'other';
-}
+function buildPlainTextPrompt(): string {
+  return `You are a professional translator. Your task is to first determine the target language, then translate the text.
 
-function buildPlainTextPrompt(targetLang: string): string {
-  return `You are a professional ${targetLang} native translator who needs to fluently translate text into ${targetLang}.
+## Language Detection Rule
+Analyze the text content: ignore all symbols, punctuation, and numbers (including Arabic numerals), only count actual letter/character content.
+- If Chinese characters make up MORE THAN 80% of the remaining characters → translate to **English**
+- Otherwise (Chinese characters ≤ 80%) → translate to **Simplified Chinese**
 
 ## Translation Rules
 1. Output only the translated content, without explanations or additional content (such as "Here's the translation:" or "Translation as follows:")
@@ -38,11 +37,16 @@ Translation A
 ${PARAGRAPH_SEPARATOR}
 Translation B
 
-Translate to ${targetLang} (output translation only):`;
+Determine the target language using the rule above, then translate (output translation only):`;
 }
 
-function buildHtmlPrompt(targetLang: string): string {
-  return `You are a professional ${targetLang} native translator. Translate the text content within the HTML into ${targetLang}.
+function buildHtmlPrompt(): string {
+  return `You are a professional translator. Your task is to first determine the target language, then translate the HTML text content.
+
+## Language Detection Rule
+Analyze only the human-readable text content in the HTML (ignore all HTML tags, attributes, URLs). Among the text content, ignore all symbols, punctuation, and numbers (including Arabic numerals), only count actual letter/character content.
+- If Chinese characters make up MORE THAN 80% of the remaining characters → translate to **English**
+- Otherwise (Chinese characters ≤ 80%) → translate to **Simplified Chinese**
 
 ## CRITICAL RULES
 1. Output ONLY the translated HTML. No explanations, no markdown code fences, no extra text.
@@ -54,7 +58,7 @@ function buildHtmlPrompt(targetLang: string): string {
 7. Do NOT add, remove, or reorder any HTML tags.
 8. Do NOT wrap output in \`\`\`html or any code block.
 
-Translate to ${targetLang} (output translated HTML only):`;
+Determine the target language using the rule above, then translate (output translated HTML only):`;
 }
 
 function preProcess(text: string): string {
@@ -164,15 +168,10 @@ async function translateHandler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { env } = await getCloudflareContext();
 
-    // 用纯文本检测语言（更准确，不受 HTML 标签干扰）
-    const detectSource = content || contentHtml || '';
-    const lang = detectLanguage(detectSource);
-    const targetLang = lang === 'zh' ? 'English' : 'Simplified Chinese';
-
     // 纯文本翻译（有 content 才执行）
     let textResult: string | null = null;
     if (content && content.length > 0) {
-      const plainPrompt = buildPlainTextPrompt(targetLang);
+      const plainPrompt = buildPlainTextPrompt();
       const processed = preProcess(content);
       const translatedPlain = await translate(processed, plainPrompt, env);
       textResult = postProcess(translatedPlain, content);
@@ -182,7 +181,7 @@ async function translateHandler(req: NextApiRequest, res: NextApiResponse) {
     let htmlResult: string | null = null;
     if (contentHtml && typeof contentHtml === 'string' && contentHtml.length > 0) {
       try {
-        const htmlPrompt = buildHtmlPrompt(targetLang);
+        const htmlPrompt = buildHtmlPrompt();
         const rawHtml = await translate(contentHtml, htmlPrompt, env);
         htmlResult = cleanHtmlResponse(rawHtml);
       } catch (e) {
