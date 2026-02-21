@@ -239,7 +239,7 @@ export default function EmailList() {
 
           {/* 搜索栏 */}
           <SearchBar
-            key={isInInbox ? `inbox-${selectedInbox}` : "global"}
+            key={isInInbox ? "inbox" : "global"}
             onSearch={handleSearch}
             initialSearch={activeSearch}
             initialRegex={activeSearchRegex}

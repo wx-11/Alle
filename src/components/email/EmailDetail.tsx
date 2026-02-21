@@ -255,7 +255,7 @@ export default function EmailDetail({ email }: { email: Email | null }) {
                       t("translate")
                     }
                     className={cn(
-                      "rounded-lg gap-1.5 text-xs transition-all duration-200 h-7 px-2.5 cursor-pointer",
+                      "rounded-lg gap-1.5 text-xs transition-all duration-200 h-7 px-2.5",
                       !isTranslating && !showTranslated && "text-muted-foreground hover:text-foreground",
                       isTranslating && "border-primary/30 text-muted-foreground cursor-wait",
                       showTranslated && "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15"
@@ -283,7 +283,7 @@ export default function EmailDetail({ email }: { email: Email | null }) {
                     size="sm"
                     onClick={handleCopyFullText}
                     aria-label={copied ? t("copied") : t("copyFullText")}
-                    className="rounded-lg gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-all duration-200 h-7 px-2.5 cursor-pointer"
+                    className="rounded-lg gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-all duration-200 h-7 px-2.5"
                   >
                     <AnimatePresence mode="wait" initial={false}>
                       {copied ? (
@@ -318,7 +318,7 @@ export default function EmailDetail({ email }: { email: Email | null }) {
                     onClick={handleToggleRawSource}
                     aria-label={showRawSource ? t("hideRawSource") : t("viewRawSource")}
                     className={cn(
-                      "rounded-lg gap-1.5 text-xs transition-all duration-200 h-7 px-2.5 cursor-pointer",
+                      "rounded-lg gap-1.5 text-xs transition-all duration-200 h-7 px-2.5",
                       showRawSource
                         ? "bg-muted text-foreground"
                         : "text-muted-foreground hover:text-foreground"
