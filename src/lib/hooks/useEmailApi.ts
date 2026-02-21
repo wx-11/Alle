@@ -34,8 +34,10 @@ export const useEmailListInfinite = () => {
 
   const readStatusParam = filters.readStatus === 'read' ? 1 : filters.readStatus === 'unread' ? 0 : undefined;
 
-  const searchValue = filters.search || '';
-  const searchRegex = filters.searchRegex;
+  // 子文件夹内用 inboxSearch，外层用 search
+  const isInInbox = !!(groupByInbox && selectedInbox);
+  const searchValue = isInInbox ? (filters.inboxSearch || '') : (filters.search || '');
+  const searchRegex = isInInbox ? filters.inboxSearchRegex : filters.searchRegex;
 
   // 分组模式下每页 20 条，普通模式 50 条
   const pageSize = groupByInbox ? 20 : 50;

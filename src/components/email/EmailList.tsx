@@ -31,24 +31,32 @@ export default function EmailList() {
   const filters = useEmailStore((state) => state.filters);
   const updateFilters = useEmailStore((state) => state.updateFilters);
 
-  // 收件箱列表数据（分组模式），传入搜索参数联动过滤
-  const searchParams = filters.search ? { search: filters.search, searchRegex: filters.searchRegex } : undefined;
-  const { data: inboxesData, isLoading: inboxesLoading, isFetching: inboxesFetching, refetch: refetchInboxes } = useInboxes(searchParams);
+  // 根据是否在子文件夹内，读取对应的搜索状态
+  const isInInbox = !!(groupByInbox && selectedInbox);
+  const activeSearch = isInInbox ? filters.inboxSearch : filters.search;
+  const activeSearchRegex = isInInbox ? filters.inboxSearchRegex : filters.searchRegex;
+
+  // 收件箱列表数据（分组模式），仅用全局搜索参数
+  const globalSearchParams = filters.search ? { search: filters.search, searchRegex: filters.searchRegex } : undefined;
+  const { data: inboxesData, isLoading: inboxesLoading, isFetching: inboxesFetching, refetch: refetchInboxes } = useInboxes(globalSearchParams);
   const inboxes = inboxesData ?? [];
 
   // 邮件列表数据
   const { data, isLoading, isFetching, refetch, fetchNextPage, hasNextPage } = useEmailListInfinite();
 
-  // 搜索处理
+  // 搜索处理：子文件夹内写 inboxSearch，外层写 search
   const handleSearch = useCallback((keyword: string, isRegex: boolean) => {
-    const unchanged = keyword === filters.search && isRegex === filters.searchRegex;
-    updateFilters({ search: keyword, searchRegex: isRegex });
-    // 搜索词未变时强制刷新
+    const unchanged = keyword === activeSearch && isRegex === activeSearchRegex;
+    if (isInInbox) {
+      updateFilters({ inboxSearch: keyword, inboxSearchRegex: isRegex });
+    } else {
+      updateFilters({ search: keyword, searchRegex: isRegex });
+    }
     if (unchanged) {
       void refetch();
-      void refetchInboxes();
+      if (!isInInbox) void refetchInboxes();
     }
-  }, [filters.search, filters.searchRegex, updateFilters, refetch, refetchInboxes]);
+  }, [activeSearch, activeSearchRegex, isInInbox, updateFilters, refetch, refetchInboxes]);
   const emails = useEmailStore((state) => state.emails);
   const selectedEmailId = useEmailStore((state) => state.selectedEmailId);
   const selectEmail = useEmailStore((state) => state.selectEmail);
@@ -231,9 +239,10 @@ export default function EmailList() {
 
           {/* 搜索栏 */}
           <SearchBar
+            key={isInInbox ? `inbox-${selectedInbox}` : "global"}
             onSearch={handleSearch}
-            initialSearch={filters.search}
-            initialRegex={filters.searchRegex}
+            initialSearch={activeSearch}
+            initialRegex={activeSearchRegex}
           />
 
           <div className="flex-1 overflow-hidden">

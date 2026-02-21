@@ -96,7 +96,7 @@ export default function SearchBar({ onSearch, initialSearch = "", initialRegex =
           onClick={handleToggleRegex}
           className={`min-w-[36px] min-h-[36px] flex items-center justify-center text-xs font-mono flex-shrink-0 rounded-md transition-colors cursor-pointer select-none ${
             isRegex
-              ? "text-primary bg-accent"
+              ? "bg-foreground text-background"
               : "text-muted-foreground"
           }`}
           title={t("regexMode")}

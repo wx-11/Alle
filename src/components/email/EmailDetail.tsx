@@ -255,9 +255,9 @@ export default function EmailDetail({ email }: { email: Email | null }) {
                       t("translate")
                     }
                     className={cn(
-                      "rounded-lg gap-1.5 text-xs transition-all duration-200 h-7 px-2.5",
+                      "rounded-lg gap-1.5 text-xs transition-all duration-200 h-7 px-2.5 cursor-pointer",
                       !isTranslating && !showTranslated && "text-muted-foreground hover:text-foreground",
-                      isTranslating && "border-primary/30 text-muted-foreground",
+                      isTranslating && "border-primary/30 text-muted-foreground cursor-wait",
                       showTranslated && "bg-primary/10 text-primary border border-primary/20 hover:bg-primary/15"
                     )}
                   >
@@ -283,7 +283,7 @@ export default function EmailDetail({ email }: { email: Email | null }) {
                     size="sm"
                     onClick={handleCopyFullText}
                     aria-label={copied ? t("copied") : t("copyFullText")}
-                    className="rounded-lg gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-all duration-200 h-7 px-2.5"
+                    className="rounded-lg gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-all duration-200 h-7 px-2.5 cursor-pointer"
                   >
                     <AnimatePresence mode="wait" initial={false}>
                       {copied ? (
@@ -318,7 +318,7 @@ export default function EmailDetail({ email }: { email: Email | null }) {
                     onClick={handleToggleRawSource}
                     aria-label={showRawSource ? t("hideRawSource") : t("viewRawSource")}
                     className={cn(
-                      "rounded-lg gap-1.5 text-xs transition-all duration-200 h-7 px-2.5",
+                      "rounded-lg gap-1.5 text-xs transition-all duration-200 h-7 px-2.5 cursor-pointer",
                       showRawSource
                         ? "bg-muted text-foreground"
                         : "text-muted-foreground hover:text-foreground"
@@ -467,8 +467,8 @@ function RawBlock({ label, text, maxHeight }: { label: string; text: string; max
         type="button"
         onClick={handleCopy}
         className={cn(
-          "absolute top-6 p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-all",
-          hasScrollbar ? "right-4" : "right-2"
+          "absolute top-6 p-1 rounded text-muted-foreground hover:text-foreground hover:bg-accent transition-all cursor-pointer",
+          hasScrollbar ? "right-6" : "right-2"
         )}
       >
         {copied ? <Check className="h-3.5 w-3.5 text-chart-2" /> : <Copy className="h-3.5 w-3.5" />}

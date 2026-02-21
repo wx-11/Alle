@@ -10,6 +10,8 @@ export interface EmailFilters {
   recipients: string[];
   search: string;
   searchRegex: boolean;
+  inboxSearch: string;
+  inboxSearchRegex: boolean;
 }
 
 const createDefaultFilters = (): EmailFilters => ({
@@ -18,6 +20,8 @@ const createDefaultFilters = (): EmailFilters => ({
   recipients: [],
   search: '',
   searchRegex: false,
+  inboxSearch: '',
+  inboxSearchRegex: false,
 });
 
 const dedupeEmails = (emails: Email[]): Email[] => {
@@ -125,8 +129,19 @@ const useEmailStore = create<EmailStoreState>((set, get) => ({
     set({ filters: createDefaultFilters() });
   },
   setSelectedInbox: (inbox) => {
-    // 切换收件箱时清空邮件列表，避免旧数据闪烁
-    set({ selectedInbox: inbox, selectedEmailId: null, emails: [], total: 0, hasMore: false });
+    // 切换收件箱时清空邮件列表和收件箱搜索，避免旧数据闪烁
+    set((state) => ({
+      selectedInbox: inbox,
+      selectedEmailId: null,
+      emails: [],
+      total: 0,
+      hasMore: false,
+      filters: {
+        ...state.filters,
+        inboxSearch: '',
+        inboxSearchRegex: false,
+      },
+    }));
   },
 }));
 
